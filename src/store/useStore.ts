@@ -2,11 +2,33 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Investment, DEDInput, LayoutOption, FASTEMSNode } from '../types';
 import { defaultInvestments, defaultDEDInput, defaultLayout, defaultFASTEMSTree } from '../data/defaults';
+import type { PresenceUser } from '../hooks/usePresence';
+
+export interface Toast {
+  id: string;
+  message: string;
+  type: 'info' | 'success' | 'error';
+}
 
 interface AppState {
+  // Navigation
   activeTab: string;
   setActiveTab: (tab: string) => void;
 
+  // Session & collaboration
+  sessionId: string | null;
+  setSessionId: (id: string) => void;
+  userName: string;
+  setUserName: (name: string) => void;
+  onlineUsers: PresenceUser[];
+  setOnlineUsers: (users: PresenceUser[]) => void;
+
+  // Toasts
+  toasts: Toast[];
+  addToast: (t: Omit<Toast, 'id'>) => void;
+  removeToast: (id: string) => void;
+
+  // App data
   investments: Investment[];
   setInvestments: (investments: Investment[]) => void;
   discountRate: number;
@@ -27,9 +49,26 @@ interface AppState {
 export const useStore = create<AppState>()(
   persist(
     (set) => ({
+      // Navigation
       activeTab: 'dashboard',
       setActiveTab: (tab) => set({ activeTab: tab }),
 
+      // Session
+      sessionId: null,
+      setSessionId: (sessionId) => set({ sessionId }),
+      userName: '',
+      setUserName: (userName) => set({ userName }),
+      onlineUsers: [],
+      setOnlineUsers: (onlineUsers) => set({ onlineUsers }),
+
+      // Toasts (not persisted)
+      toasts: [],
+      addToast: (t) => set((s) => ({
+        toasts: [...s.toasts, { ...t, id: `toast-${Date.now()}-${Math.random()}` }],
+      })),
+      removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+
+      // App data
       investments: defaultInvestments,
       setInvestments: (investments) => set({ investments }),
       discountRate: 8,
@@ -48,6 +87,18 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'fieldlab-storage',
+      // Don't persist ephemeral state
+      partialize: (s) => ({
+        activeTab: s.activeTab,
+        sessionId: s.sessionId,
+        userName: s.userName,
+        investments: s.investments,
+        discountRate: s.discountRate,
+        layouts: s.layouts,
+        activeLayoutId: s.activeLayoutId,
+        dedInput: s.dedInput,
+        fastemTree: s.fastemTree,
+      }),
     }
   )
 );

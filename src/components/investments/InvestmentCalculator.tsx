@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  BarChart, Bar, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   Legend, ResponsiveContainer, ReferenceLine,
 } from 'recharts';
 import { useStore } from '../../store/useStore';
@@ -36,14 +36,6 @@ export default function InvestmentCalculator() {
     };
     return { inv, calc: calculateInvestment(adj, discountRate) };
   });
-
-  const barData = calcs.map(({ inv, calc }) => ({
-    name: inv.shortName,
-    NPV: Math.round(calc.npv),
-    ROI: Math.round(calc.roi),
-    Takaisinmaksu: Math.round(calc.paybackPeriod * 10) / 10,
-    color: inv.color,
-  }));
 
   const cashflowData = Array.from({ length: 11 }, (_, yr) => {
     const d: Record<string, number | string> = { year: `v${yr}` };
@@ -169,40 +161,22 @@ export default function InvestmentCalculator() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card title="NPV-vertailu (€)">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={barData} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart
+              data={calcs.map(({ inv, calc }) => ({ name: inv.shortName, NPV: Math.round(calc.npv), color: inv.color }))}
+              margin={{ top: 15, right: 10, bottom: 5, left: 10 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
               <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 10 }} />
-              <YAxis tick={{ fill: '#9ca3af', fontSize: 10 }}
-                tickFormatter={(v) => `${(v / 1000).toFixed(0)}k€`} />
+              <YAxis tick={{ fill: '#9ca3af', fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k€`} />
               <Tooltip
                 contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, fontSize: 12 }}
-                formatter={(v: unknown) => formatCurrency(v as number)}
+                formatter={(v: unknown) => [formatCurrency(v as number), 'NPV']}
               />
               <ReferenceLine y={0} stroke="#4b5563" />
-              {barData.map((d, i) => (
-                <Bar key={d.name} dataKey="NPV" fill={investments[i]?.color ?? '#3b82f6'} radius={[3, 3, 0, 0]} />
-              )).slice(0, 1)}
-              <Bar dataKey="NPV" fill="#3b82f6" radius={[3, 3, 0, 0]}
-                label={false}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-          {/* Custom bar per investment */}
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={calcs.map(({ inv, calc }) => ({
-              name: inv.shortName, NPV: Math.round(calc.npv), fill: inv.color
-            }))} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-              <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 10 }} />
-              <YAxis tick={{ fill: '#9ca3af', fontSize: 10 }}
-                tickFormatter={(v) => `${(v / 1000).toFixed(0)}k€`} />
-              <Tooltip contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, fontSize: 12 }}
-                formatter={(v: unknown) => [formatCurrency(v as number), 'NPV']} />
-              <ReferenceLine y={0} stroke="#4b5563" />
-              <Bar dataKey="NPV" radius={[3, 3, 0, 0]}>
+              <Bar dataKey="NPV" radius={[4, 4, 0, 0]}>
                 {calcs.map(({ inv }) => (
-                  <rect key={inv.id} fill={inv.color} />
+                  <Cell key={inv.id} fill={inv.color} />
                 ))}
               </Bar>
             </BarChart>
