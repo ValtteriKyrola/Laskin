@@ -36,7 +36,7 @@ export const odooMatrix: Record<string, Record<string, Status>> = {
     'Ostotilaukset': 'full',
     'Hienokuormitus': 'no',
     'Laadunhallinta': 'partial',
-    'Jäljitettävuus': 'full',
+    'Jäljitettävyys': 'full',
     'FASTEMS-integraatio': 'custom',
   },
   'Purchase': {

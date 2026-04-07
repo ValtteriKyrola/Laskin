@@ -5,8 +5,8 @@ export function calculateInvestment(inv: Investment, discountRate: number): Inve
   const annualNetCashFlow = inv.annualSavings - inv.annualMaintenanceCost;
   const r = discountRate / 100;
 
-  // Payback period
-  const paybackPeriod = inv.cost / annualNetCashFlow;
+  // Payback period (guard against division by zero)
+  const paybackPeriod = annualNetCashFlow <= 0 ? Infinity : inv.cost / annualNetCashFlow;
 
   // ROI %
   const totalProfit = annualNetCashFlow * inv.lifespan - inv.cost;

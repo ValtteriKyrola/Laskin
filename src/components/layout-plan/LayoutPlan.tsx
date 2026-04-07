@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 import type { Machine, LayoutOption, MaterialFlow } from '../../types';
 import Card from '../shared/Card';
@@ -33,6 +33,8 @@ export default function LayoutPlan() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dragging, setDragging] = useState<{ id: string; offsetX: number; offsetY: number } | null>(null);
+  // Local drag position – only committed to store on mouseUp to avoid flooding Supabase
+  const dragPos = useRef<{ id: string; x: number; y: number } | null>(null);
   const [showAddFlow, setShowAddFlow] = useState(false);
   const [flowFrom, setFlowFrom] = useState('');
   const [flowTo, setFlowTo] = useState('');
@@ -101,23 +103,35 @@ export default function LayoutPlan() {
     setDragging({ id, offsetX: svgX - machine.x, offsetY: svgY - machine.y });
   };
 
+  // During drag: only update local ref (no store/Supabase write per frame)
+  const [localMachines, setLocalMachines] = useState(activeLayout.machines);
+  useEffect(() => { if (!dragging) setLocalMachines(activeLayout.machines); }, [activeLayout.machines, dragging]);
+  const activeMachines = dragging ? localMachines : activeLayout.machines;
+
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     if (!dragging) return;
     const svgRect = svgRef.current?.getBoundingClientRect();
     if (!svgRect) return;
-    const svgX = e.clientX - svgRect.left;
-    const svgY = e.clientY - svgRect.top;
-    const newX = snap(Math.max(0, svgX - dragging.offsetX));
-    const newY = snap(Math.max(0, svgY - dragging.offsetY));
-    updateLayout({
-      ...activeLayout,
-      machines: activeLayout.machines.map((m) =>
-        m.id === dragging.id ? { ...m, x: newX, y: newY } : m
-      ),
-    });
+    const newX = snap(Math.max(0, e.clientX - svgRect.left - dragging.offsetX));
+    const newY = snap(Math.max(0, e.clientY - svgRect.top - dragging.offsetY));
+    dragPos.current = { id: dragging.id, x: newX, y: newY };
+    setLocalMachines(activeLayout.machines.map((m) =>
+      m.id === dragging.id ? { ...m, x: newX, y: newY } : m
+    ));
   };
 
-  const handleMouseUp = () => setDragging(null);
+  // On mouseUp: commit final position to store (single Supabase write)
+  const handleMouseUp = () => {
+    if (dragging && dragPos.current) {
+      const { id, x, y } = dragPos.current;
+      updateLayout({
+        ...activeLayout,
+        machines: activeLayout.machines.map((m) => m.id === id ? { ...m, x, y } : m),
+      });
+      dragPos.current = null;
+    }
+    setDragging(null);
+  };
 
   const exportSVG = () => {
     const svg = svgRef.current;
@@ -288,7 +302,7 @@ export default function LayoutPlan() {
                 })}
 
                 {/* Machines */}
-                {activeLayout.machines.map((machine) => {
+                {activeMachines.map((machine) => {
                   const isSelected = machine.id === selectedId;
                   return (
                     <g

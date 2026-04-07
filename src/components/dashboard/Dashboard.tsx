@@ -7,16 +7,15 @@ export default function Dashboard() {
 
   const totalCost = investments.reduce((s, i) => s + i.cost, 0);
   const totalSavings = investments.reduce((s, i) => s + i.annualSavings - i.annualMaintenanceCost, 0);
-  const avgROI = investments.reduce((s, i) => {
-    const calc = calculateInvestment(i, discountRate);
-    return s + calc.roi;
-  }, 0) / investments.length;
+  const avgROI = investments.length > 0
+    ? investments.reduce((s, i) => s + calculateInvestment(i, discountRate).roi, 0) / investments.length
+    : 0;
 
-  const bestInv = investments.reduce((best, inv) => {
-    const calc = calculateInvestment(inv, discountRate);
-    const bestCalc = calculateInvestment(best, discountRate);
-    return calc.npv > bestCalc.npv ? inv : best;
-  }, investments[0]);
+  const bestInv = investments.length > 0
+    ? investments.reduce((best, inv) =>
+        calculateInvestment(inv, discountRate).npv > calculateInvestment(best, discountRate).npv ? inv : best
+      , investments[0])
+    : null;
 
   const kpis = [
     {

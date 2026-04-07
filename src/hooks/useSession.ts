@@ -30,21 +30,24 @@ export function useSession() {
     const params = new URLSearchParams(window.location.search);
     const urlSession = params.get('session');
 
+    // UUID validation to prevent injection
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
     async function init() {
-      if (urlSession) {
+      if (urlSession && UUID_RE.test(urlSession)) {
         // Liity olemassaolevaan sessioon
-        const { data } = await supabase.from('sessions').select('id').eq('id', urlSession).single();
-        if (data) {
+        const { data, error } = await supabase.from('sessions').select('id').eq('id', urlSession).maybeSingle();
+        if (!error && data) {
           setSessionId(data.id);
           await loadSessionData(data.id);
           return;
         }
       }
 
-      if (sessionId) {
+      if (sessionId && UUID_RE.test(sessionId)) {
         // Käytä tallennettua sessiota
-        const { data } = await supabase.from('sessions').select('id').eq('id', sessionId).single();
-        if (data) {
+        const { data, error } = await supabase.from('sessions').select('id').eq('id', sessionId).maybeSingle();
+        if (!error && data) {
           await loadSessionData(data.id);
           return;
         }

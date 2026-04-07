@@ -57,7 +57,7 @@ export function usePresence() {
   // Update presence when tab changes
   useEffect(() => {
     if (!sessionId || !userName) return;
-    const channel = supabase.getChannels().find((c) => c.topic === `realtime:presence-${sessionId}`);
+    const channel = supabase.getChannels().find((c) => c.topic.includes(`presence-${sessionId}`));
     if (channel) {
       channel.track({ activeTab, onlineAt: new Date().toISOString() });
     }
