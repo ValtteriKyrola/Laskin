@@ -11,6 +11,10 @@ export interface Toast {
 }
 
 interface AppState {
+  // Theme
+  isDark: boolean;
+  setIsDark: (isDark: boolean) => void;
+
   // Navigation
   activeTab: string;
   setActiveTab: (tab: string) => void;
@@ -49,6 +53,10 @@ interface AppState {
 export const useStore = create<AppState>()(
   persist(
     (set) => ({
+      // Theme
+      isDark: true,
+      setIsDark: (isDark) => set({ isDark }),
+
       // Navigation
       activeTab: 'dashboard',
       setActiveTab: (tab) => set({ activeTab: tab }),
@@ -89,6 +97,7 @@ export const useStore = create<AppState>()(
       name: 'fieldlab-storage',
       // Don't persist ephemeral state
       partialize: (s) => ({
+        isDark: s.isDark,
         activeTab: s.activeTab,
         sessionId: s.sessionId,
         userName: s.userName,

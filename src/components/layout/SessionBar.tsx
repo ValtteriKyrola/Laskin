@@ -7,7 +7,7 @@ function UserAvatar({ user }: { user: PresenceUser }) {
   return (
     <div
       title={`${user.name} – ${user.activeTab}`}
-      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-gray-950 shrink-0 ring-2 ring-gray-950"
+      className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ring-2 ring-white dark:ring-neutral-900"
       style={{ backgroundColor: user.color }}
     >
       {initials}
@@ -15,7 +15,11 @@ function UserAvatar({ user }: { user: PresenceUser }) {
   );
 }
 
-export default function SessionBar() {
+interface SessionBarProps {
+  compact?: boolean;
+}
+
+export default function SessionBar({ compact = false }: SessionBarProps) {
   const { sessionId, userName, setUserName, onlineUsers } = useStore();
   const [copied, setCopied] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -40,6 +44,35 @@ export default function SessionBar() {
     setEditingName(false);
   };
 
+  if (compact) {
+    return (
+      <div className="space-y-2">
+        {onlineUsers.length > 0 && (
+          <div className="flex items-center gap-1 flex-wrap">
+            {onlineUsers.slice(0, 4).map((u) => (
+              <UserAvatar key={u.name} user={u} />
+            ))}
+            {onlineUsers.length > 4 && (
+              <span className="text-xs text-neutral-500">+{onlineUsers.length - 4}</span>
+            )}
+          </div>
+        )}
+        {sessionId && (
+          <button
+            onClick={copyLink}
+            className={`w-full text-left text-xs font-mono px-2 py-1 rounded-lg border transition-colors ${
+              copied
+                ? 'bg-success/10 border-success/30 text-success'
+                : 'bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+            }`}
+          >
+            {copied ? '✓ Kopioitu!' : `📋 ${sessionId.slice(0, 8)}…`}
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2 shrink-0">
       {/* Online users */}
@@ -50,12 +83,12 @@ export default function SessionBar() {
               <UserAvatar key={u.name} user={u} />
             ))}
             {onlineUsers.length > 5 && (
-              <div className="w-7 h-7 rounded-full bg-gray-700 flex items-center justify-center text-xs text-gray-300 ring-2 ring-gray-950">
+              <div className="w-6 h-6 rounded-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center text-xs text-neutral-600 dark:text-neutral-300 ring-2 ring-white dark:ring-neutral-900">
                 +{onlineUsers.length - 5}
               </div>
             )}
           </div>
-          <span className="text-xs text-gray-500 hidden md:block ml-1">
+          <span className="text-xs text-neutral-400 hidden md:block ml-0.5">
             {onlineUsers.length} online
           </span>
         </div>
@@ -66,17 +99,17 @@ export default function SessionBar() {
         <div className="flex items-center gap-1">
           <input
             autoFocus
-            className="bg-gray-800 border border-yellow-500 rounded px-2 py-0.5 text-xs text-white w-32 focus:outline-none"
+            className="bg-neutral-100 dark:bg-neutral-800 border border-primary-500 rounded-lg px-2 py-1 text-xs text-neutral-900 dark:text-neutral-100 w-28 focus:outline-none"
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
           />
-          <button onClick={saveName} className="text-yellow-400 text-xs hover:text-yellow-300">✓</button>
+          <button onClick={saveName} className="text-primary-500 text-xs hover:text-primary-400">✓</button>
         </div>
       ) : (
         <button
           onClick={() => { setNameInput(userName); setEditingName(true); }}
-          className="text-xs text-gray-400 hover:text-gray-200 hidden sm:block"
+          className="text-xs text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hidden sm:block"
           title="Muuta nimesi"
         >
           👤 {userName}
@@ -90,8 +123,8 @@ export default function SessionBar() {
           title="Kopioi jaettava linkki"
           className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-mono border transition-colors ${
             copied
-              ? 'bg-green-900/50 border-green-700 text-green-400'
-              : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-600'
+              ? 'bg-success/10 border-success/30 text-success'
+              : 'bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:border-neutral-400 dark:hover:border-neutral-500'
           }`}
         >
           {copied ? '✓ Kopioitu!' : `📋 ${sessionId.slice(0, 8)}`}

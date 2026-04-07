@@ -1,5 +1,8 @@
 import './index.css';
-import Navbar from './components/layout/Navbar';
+import { useEffect } from 'react';
+import Sidebar from './components/layout/Sidebar';
+import TopBar from './components/layout/TopBar';
+import BottomTabBar from './components/layout/BottomTabBar';
 import ToastProvider from './components/shared/ToastProvider';
 import { useStore } from './store/useStore';
 import { useSession } from './hooks/useSession';
@@ -23,22 +26,32 @@ const pages: Record<string, React.ComponentType> = {
   quality: DataQuality,
 };
 
-// Inner component so hooks run inside store context
 function AppInner() {
   useSession();
   useRealtime();
   usePresence();
 
-  const { activeTab } = useStore();
+  const { activeTab, isDark } = useStore();
+
+  // Apply dark class on body on mount
+  useEffect(() => {
+    if (isDark) document.body.classList.add('dark');
+    else document.body.classList.remove('dark');
+  }, [isDark]);
+
   const Page = pages[activeTab] ?? Dashboard;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
-      <Navbar />
+    <div className="flex min-h-screen bg-neutral-100 dark:bg-neutral-950">
+      <Sidebar />
+      <div className="flex-1 flex flex-col min-w-0">
+        <TopBar />
+        <main className="flex-1 overflow-auto pb-16 lg:pb-0">
+          <Page />
+        </main>
+      </div>
+      <BottomTabBar />
       <ToastProvider />
-      <main>
-        <Page />
-      </main>
     </div>
   );
 }

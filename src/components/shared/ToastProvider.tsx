@@ -1,6 +1,14 @@
 import { useEffect } from 'react';
 import { useStore } from '../../store/useStore';
 
+const typeStyles = {
+  info:    'bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100',
+  success: 'bg-success/10 border-success/30 text-success',
+  error:   'bg-danger/10 border-danger/30 text-danger',
+};
+
+const typeIcon = { info: '💬', success: '✅', error: '❌' };
+
 export default function ToastProvider() {
   const { toasts, removeToast } = useStore();
 
@@ -18,20 +26,11 @@ export default function ToastProvider() {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`flex items-start gap-3 px-4 py-3 rounded-xl border shadow-xl text-sm animate-slide-in
-            ${t.type === 'info' ? 'bg-gray-900 border-gray-700 text-gray-200' : ''}
-            ${t.type === 'success' ? 'bg-green-900/80 border-green-700 text-green-100' : ''}
-            ${t.type === 'error' ? 'bg-red-900/80 border-red-700 text-red-100' : ''}
-          `}
+          className={`flex items-start gap-3 px-4 py-3 rounded-xl border shadow-dropdown text-sm animate-slide-in ${typeStyles[t.type]}`}
         >
-          <span className="text-base leading-none mt-0.5">
-            {t.type === 'info' ? '💬' : t.type === 'success' ? '✅' : '❌'}
-          </span>
+          <span className="text-base leading-none mt-0.5">{typeIcon[t.type]}</span>
           <span className="flex-1 leading-snug">{t.message}</span>
-          <button
-            onClick={() => removeToast(t.id)}
-            className="text-gray-500 hover:text-gray-300 text-xs leading-none ml-1 mt-0.5"
-          >✕</button>
+          <button onClick={() => removeToast(t.id)} className="text-neutral-400 hover:text-neutral-600 text-xs ml-1">✕</button>
         </div>
       ))}
     </div>

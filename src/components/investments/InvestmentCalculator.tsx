@@ -6,7 +6,10 @@ import {
 import { useStore } from '../../store/useStore';
 import { calculateInvestment, formatCurrency, formatNumber } from '../../utils/calculations';
 import type { Investment } from '../../types';
-import Card from '../shared/Card';
+import { Card, Modal, Button, Badge, Slider, Input } from '../ui';
+import { PlusCircle, Edit2, Trash2 } from 'lucide-react';
+import { chartColors } from '../../styles/chartTheme';
+import { useTheme } from '../../hooks/useTheme';
 
 const emptyInvestment: Omit<Investment, 'id'> = {
   name: '',
@@ -16,13 +19,22 @@ const emptyInvestment: Omit<Investment, 'id'> = {
   annualMaintenanceCost: 0,
   lifespan: 10,
   description: '',
-  color: '#3b82f6',
+  color: '#7B2D8E',
 };
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
+const gridStroke = (dark: boolean) => dark ? '#343A40' : '#E9ECEF';
+const tickFill   = (dark: boolean) => dark ? '#ADB5BD' : '#6C757D';
+const tooltipStyle = (dark: boolean) => ({
+  background: dark ? '#212529' : '#fff',
+  border: `1px solid ${dark ? '#343A40' : '#DEE2E6'}`,
+  borderRadius: 8,
+  fontSize: 12,
+  color: dark ? '#F8F9FA' : '#212529',
+});
 
 export default function InvestmentCalculator() {
   const { investments, setInvestments, discountRate, setDiscountRate } = useStore();
+  const { isDark } = useTheme();
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Omit<Investment, 'id'>>(emptyInvestment);
   const [showForm, setShowForm] = useState(false);
@@ -37,119 +49,89 @@ export default function InvestmentCalculator() {
     return { inv, calc: calculateInvestment(adj, discountRate) };
   });
 
+  const bestId = calcs.length > 0
+    ? calcs.reduce((b, c) => c.calc.npv > b.calc.npv ? c : b).inv.id
+    : null;
+
   const cashflowData = Array.from({ length: 11 }, (_, yr) => {
     const d: Record<string, number | string> = { year: `v${yr}` };
     calcs.forEach(({ inv, calc }) => {
-      if (yr === 0) d[inv.shortName] = -inv.cost;
-      else d[inv.shortName] = Math.round(-inv.cost + calc.annualNetCashFlow * yr);
+      d[inv.shortName] = yr === 0 ? -inv.cost : Math.round(-inv.cost + calc.annualNetCashFlow * yr);
     });
     return d;
   });
 
-  const openEdit = (inv: Investment) => {
-    setForm({ ...inv });
-    setEditId(inv.id);
-    setShowForm(true);
-  };
-
-  const openNew = () => {
-    setForm({ ...emptyInvestment, color: COLORS[investments.length % COLORS.length] });
-    setEditId(null);
-    setShowForm(true);
-  };
+  const openEdit = (inv: Investment) => { setForm({ ...inv }); setEditId(inv.id); setShowForm(true); };
+  const openNew  = () => { setForm({ ...emptyInvestment, color: chartColors[investments.length % chartColors.length] }); setEditId(null); setShowForm(true); };
 
   const saveForm = () => {
-    if (editId) {
-      setInvestments(investments.map((i) => (i.id === editId ? { id: editId, ...form } : i)));
-    } else {
-      setInvestments([...investments, { id: `inv-${Date.now()}`, ...form }]);
-    }
+    if (editId) setInvestments(investments.map((i) => (i.id === editId ? { id: editId, ...form } : i)));
+    else setInvestments([...investments, { id: `inv-${Date.now()}`, ...form }]);
     setShowForm(false);
   };
 
-  const deleteInv = (id: string) => {
-    setInvestments(investments.filter((i) => i.id !== id));
-  };
+  const deleteInv = (id: string) => setInvestments(investments.filter((i) => i.id !== id));
 
   return (
     <div className="p-4 lg:p-6 space-y-4 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-white">Investointilaskin</h1>
-          <p className="text-gray-400 text-xs mt-0.5">NPV, IRR, ROI ja takaisinmaksuaika – herkkyysanalyysi</p>
+          <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Investointilaskin</h1>
+          <p className="text-neutral-500 dark:text-neutral-400 text-xs mt-0.5">NPV, IRR, ROI ja takaisinmaksuaika – herkkyysanalyysi</p>
         </div>
-        <button onClick={openNew} className="btn-primary">+ Lisää investointi</button>
+        <Button onClick={openNew} icon={<PlusCircle size={16} />}>Lisää investointi</Button>
       </div>
 
-      {/* Global settings */}
-      <Card title="Laskenta-asetukset">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="text-xs text-gray-400 block mb-1">Diskonttokorko: {discountRate} %</label>
-            <input type="range" min={0} max={15} step={0.5} value={discountRate}
-              onChange={(e) => setDiscountRate(Number(e.target.value))}
-              className="w-full" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-400 block mb-1">
-              Vuosisäästön herkkyys: {sensitivity.savings >= 0 ? '+' : ''}{sensitivity.savings} %
-            </label>
-            <input type="range" min={-30} max={30} step={5} value={sensitivity.savings}
-              onChange={(e) => setSensitivity((s) => ({ ...s, savings: Number(e.target.value) }))}
-              className="w-full" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-400 block mb-1">
-              Hankintahinnan muutos: {sensitivity.cost >= 0 ? '+' : ''}{sensitivity.cost} %
-            </label>
-            <input type="range" min={-20} max={40} step={5} value={sensitivity.cost}
-              onChange={(e) => setSensitivity((s) => ({ ...s, cost: Number(e.target.value) }))}
-              className="w-full" />
-          </div>
+      {/* Settings */}
+      <Card title="Laskenta-asetukset" accent>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Slider label="Diskonttokorko" min={0} max={15} step={0.5} value={discountRate} onChange={setDiscountRate} unit="%" />
+          <Slider label="Vuosisäästön herkkyys" min={-30} max={30} step={5} value={sensitivity.savings}
+            onChange={(v) => setSensitivity((s) => ({ ...s, savings: v }))} unit="%" />
+          <Slider label="Hankintahinnan muutos" min={-20} max={40} step={5} value={sensitivity.cost}
+            onChange={(v) => setSensitivity((s) => ({ ...s, cost: v }))} unit="%" />
         </div>
       </Card>
 
       {/* Comparison table */}
-      <Card title="Vertailutaulukko">
+      <Card title="Vertailutaulukko" accent>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2">Investointi</th>
-                <th className="text-right py-2">Hankinta</th>
-                <th className="text-right py-2">Vuosi CF</th>
-                <th className="text-right py-2">Takaisinmaksu</th>
-                <th className="text-right py-2">ROI</th>
-                <th className="text-right py-2">NPV</th>
-                <th className="text-right py-2">IRR</th>
-                <th className="text-right py-2"></th>
+              <tr className="border-b border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400">
+                {['Investointi', 'Hankinta', 'Vuosi CF', 'Takaisinmaksu', 'ROI', 'NPV', 'IRR', ''].map((h) => (
+                  <th key={h} className={`py-2.5 px-2 font-semibold uppercase tracking-wider ${h === '' || h === 'Hankinta' || h === 'Vuosi CF' || h === 'Takaisinmaksu' || h === 'ROI' || h === 'NPV' || h === 'IRR' ? 'text-right' : 'text-left'}`}>{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {calcs.map(({ inv, calc }) => (
-                <tr key={inv.id} className="border-b border-gray-800/50 hover:bg-gray-800/30">
-                  <td className="py-2">
+                <tr key={inv.id} className={`border-b border-neutral-100 dark:border-neutral-800 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50 ${inv.id === bestId ? 'bg-primary-50 dark:bg-primary-900/20' : ''}`}>
+                  <td className="py-2 px-2">
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: inv.color }} />
-                      <span className="text-gray-100 font-medium">{inv.shortName}</span>
+                      <span className="text-neutral-900 dark:text-neutral-100 font-medium">{inv.shortName}</span>
+                      {inv.id === bestId && <Badge variant="primary" size="sm">Paras</Badge>}
                     </div>
-                    <div className="text-gray-500 text-xs mt-0.5 pl-4.5">{inv.description.slice(0, 50)}…</div>
+                    <div className="text-neutral-400 text-xs mt-0.5 pl-4">{inv.description.slice(0, 45)}{inv.description.length > 45 ? '…' : ''}</div>
                   </td>
-                  <td className="py-2 text-right text-gray-300">{formatCurrency(inv.cost)}</td>
-                  <td className="py-2 text-right text-gray-300">{formatCurrency(calc.annualNetCashFlow)}</td>
-                  <td className="py-2 text-right text-gray-300">{formatNumber(calc.paybackPeriod)} v</td>
-                  <td className={`py-2 text-right font-semibold ${calc.roi > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  <td className="py-2 px-2 text-right text-neutral-600 dark:text-neutral-300">{formatCurrency(inv.cost)}</td>
+                  <td className="py-2 px-2 text-right text-neutral-600 dark:text-neutral-300">{formatCurrency(calc.annualNetCashFlow)}</td>
+                  <td className="py-2 px-2 text-right text-neutral-600 dark:text-neutral-300">
+                    {calc.paybackPeriod === Infinity ? '∞' : formatNumber(calc.paybackPeriod)} v
+                  </td>
+                  <td className={`py-2 px-2 text-right font-semibold ${calc.roi > 0 ? 'text-success' : 'text-danger'}`}>
                     {formatNumber(calc.roi, 0)} %
                   </td>
-                  <td className={`py-2 text-right font-semibold ${calc.npv > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  <td className={`py-2 px-2 text-right font-semibold ${calc.npv > 0 ? 'text-success' : 'text-danger'}`}>
                     {formatCurrency(calc.npv)}
                   </td>
-                  <td className={`py-2 text-right font-semibold ${calc.irr > discountRate ? 'text-green-400' : 'text-yellow-400'}`}>
+                  <td className={`py-2 px-2 text-right font-semibold ${calc.irr > discountRate ? 'text-success' : 'text-warning'}`}>
                     {formatNumber(calc.irr, 1)} %
                   </td>
-                  <td className="py-2 text-right">
-                    <button onClick={() => openEdit(inv)} className="text-yellow-400 hover:text-yellow-300 mr-2 text-xs">✎</button>
-                    <button onClick={() => deleteInv(inv.id)} className="text-red-400 hover:text-red-300 text-xs">✕</button>
+                  <td className="py-2 px-2 text-right">
+                    <button onClick={() => openEdit(inv)} className="p-1 text-neutral-400 hover:text-primary-500 transition-colors mr-1"><Edit2 size={13} /></button>
+                    <button onClick={() => deleteInv(inv.id)} className="p-1 text-neutral-400 hover:text-danger transition-colors"><Trash2 size={13} /></button>
                   </td>
                 </tr>
               ))}
@@ -160,106 +142,66 @@ export default function InvestmentCalculator() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card title="NPV-vertailu (€)">
+        <Card title="NPV-vertailu (€)" accent>
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart
-              data={calcs.map(({ inv, calc }) => ({ name: inv.shortName, NPV: Math.round(calc.npv), color: inv.color }))}
-              margin={{ top: 15, right: 10, bottom: 5, left: 10 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-              <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 10 }} />
-              <YAxis tick={{ fill: '#9ca3af', fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k€`} />
-              <Tooltip
-                contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, fontSize: 12 }}
-                formatter={(v: unknown) => [formatCurrency(v as number), 'NPV']}
-              />
-              <ReferenceLine y={0} stroke="#4b5563" />
+            <BarChart data={calcs.map(({ inv, calc }) => ({ name: inv.shortName, NPV: Math.round(calc.npv), color: inv.color }))} margin={{ top: 15, right: 10, bottom: 5, left: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke(isDark)} />
+              <XAxis dataKey="name" tick={{ fill: tickFill(isDark), fontSize: 10 }} />
+              <YAxis tick={{ fill: tickFill(isDark), fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k€`} />
+              <Tooltip contentStyle={tooltipStyle(isDark)} formatter={(v: unknown) => [formatCurrency(v as number), 'NPV']} />
+              <ReferenceLine y={0} stroke={gridStroke(isDark)} />
               <Bar dataKey="NPV" radius={[4, 4, 0, 0]}>
-                {calcs.map(({ inv }) => (
-                  <Cell key={inv.id} fill={inv.color} />
-                ))}
+                {calcs.map(({ inv }) => <Cell key={inv.id} fill={inv.color} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </Card>
 
-        <Card title="Kumulatiivinen kassavirta (€)">
+        <Card title="Kumulatiivinen kassavirta (€)" accent>
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={cashflowData} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-              <XAxis dataKey="year" tick={{ fill: '#9ca3af', fontSize: 10 }} />
-              <YAxis tick={{ fill: '#9ca3af', fontSize: 10 }}
-                tickFormatter={(v) => `${(v / 1000).toFixed(0)}k€`} />
-              <Tooltip contentStyle={{ background: '#1f2937', border: '1px solid #374151', borderRadius: 8, fontSize: 12 }}
-                formatter={(v: unknown) => formatCurrency(v as number)} />
-              <Legend wrapperStyle={{ fontSize: 10 }} />
-              <ReferenceLine y={0} stroke="#4b5563" strokeDasharray="4 2" />
+              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke(isDark)} />
+              <XAxis dataKey="year" tick={{ fill: tickFill(isDark), fontSize: 10 }} />
+              <YAxis tick={{ fill: tickFill(isDark), fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k€`} />
+              <Tooltip contentStyle={tooltipStyle(isDark)} formatter={(v: unknown) => formatCurrency(v as number)} />
+              <Legend wrapperStyle={{ fontSize: 10, color: tickFill(isDark) }} />
+              <ReferenceLine y={0} stroke={gridStroke(isDark)} strokeDasharray="4 2" />
               {investments.map((inv) => (
-                <Line key={inv.id} type="monotone" dataKey={inv.shortName}
-                  stroke={inv.color} strokeWidth={2} dot={false} />
+                <Line key={inv.id} type="monotone" dataKey={inv.shortName} stroke={inv.color} strokeWidth={2} dot={false} />
               ))}
             </LineChart>
           </ResponsiveContainer>
         </Card>
       </div>
 
-      {/* Edit/Add Form Modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-lg space-y-3">
-            <h2 className="text-white font-bold text-lg">
-              {editId ? 'Muokkaa investointia' : 'Lisää investointi'}
-            </h2>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="col-span-2">
-                <label className="text-gray-400 text-xs block mb-1">Nimi</label>
-                <input className="input" value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-              </div>
-              <div>
-                <label className="text-gray-400 text-xs block mb-1">Lyhyt nimi</label>
-                <input className="input" value={form.shortName}
-                  onChange={(e) => setForm((f) => ({ ...f, shortName: e.target.value }))} />
-              </div>
-              <div>
-                <label className="text-gray-400 text-xs block mb-1">Väri</label>
-                <input type="color" className="w-full h-9 rounded bg-gray-800 border border-gray-700 cursor-pointer"
-                  value={form.color}
-                  onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))} />
-              </div>
-              <div>
-                <label className="text-gray-400 text-xs block mb-1">Hankintakustannus (€)</label>
-                <input type="number" className="input" value={form.cost}
-                  onChange={(e) => setForm((f) => ({ ...f, cost: Number(e.target.value) }))} />
-              </div>
-              <div>
-                <label className="text-gray-400 text-xs block mb-1">Vuotuinen säästö (€)</label>
-                <input type="number" className="input" value={form.annualSavings}
-                  onChange={(e) => setForm((f) => ({ ...f, annualSavings: Number(e.target.value) }))} />
-              </div>
-              <div>
-                <label className="text-gray-400 text-xs block mb-1">Ylläpito/vuosi (€)</label>
-                <input type="number" className="input" value={form.annualMaintenanceCost}
-                  onChange={(e) => setForm((f) => ({ ...f, annualMaintenanceCost: Number(e.target.value) }))} />
-              </div>
-              <div>
-                <label className="text-gray-400 text-xs block mb-1">Käyttöikä (vuotta)</label>
-                <input type="number" className="input" value={form.lifespan}
-                  onChange={(e) => setForm((f) => ({ ...f, lifespan: Number(e.target.value) }))} />
-              </div>
-              <div className="col-span-2">
-                <label className="text-gray-400 text-xs block mb-1">Kuvaus</label>
-                <textarea className="input" rows={2} value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
-              </div>
-            </div>
-            <div className="flex gap-3 justify-end pt-2">
-              <button onClick={() => setShowForm(false)} className="btn-secondary">Peruuta</button>
-              <button onClick={saveForm} className="btn-primary">Tallenna</button>
-            </div>
+      {/* Modal */}
+      <Modal open={showForm} onClose={() => setShowForm(false)} title={editId ? 'Muokkaa investointia' : 'Lisää investointi'} size="lg">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2">
+            <Input label="Nimi" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+          </div>
+          <Input label="Lyhyt nimi" value={form.shortName} onChange={(e) => setForm((f) => ({ ...f, shortName: e.target.value }))} />
+          <div>
+            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Väri</label>
+            <input type="color" className="w-full h-9 rounded-lg border border-neutral-300 dark:border-neutral-600 cursor-pointer bg-neutral-50 dark:bg-neutral-900 px-1"
+              value={form.color} onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))} />
+          </div>
+          <Input label="Hankintakustannus (€)" type="number" value={String(form.cost)} onChange={(e) => setForm((f) => ({ ...f, cost: Number(e.target.value) }))} />
+          <Input label="Vuotuinen säästö (€)" type="number" value={String(form.annualSavings)} onChange={(e) => setForm((f) => ({ ...f, annualSavings: Number(e.target.value) }))} />
+          <Input label="Ylläpito/vuosi (€)" type="number" value={String(form.annualMaintenanceCost)} onChange={(e) => setForm((f) => ({ ...f, annualMaintenanceCost: Number(e.target.value) }))} />
+          <Input label="Käyttöikä (vuotta)" type="number" value={String(form.lifespan)} onChange={(e) => setForm((f) => ({ ...f, lifespan: Number(e.target.value) }))} />
+          <div className="col-span-2">
+            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Kuvaus</label>
+            <textarea
+              className="w-full bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-600 rounded-lg px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+              rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
           </div>
         </div>
-      )}
+        <div className="flex gap-3 justify-end mt-4">
+          <Button variant="secondary" onClick={() => setShowForm(false)}>Peruuta</Button>
+          <Button onClick={saveForm}>Tallenna</Button>
+        </div>
+      </Modal>
     </div>
   );
 }
