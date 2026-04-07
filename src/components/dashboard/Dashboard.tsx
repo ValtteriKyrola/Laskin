@@ -70,7 +70,7 @@ export default function Dashboard() {
       status: 'Luonnos' as const,
       statusVariant: 'warning' as const,
       desc: 'Interaktiivinen 2D-pohjapiirros koneiden sijoittelusta ja materiaalivirroista.',
-      items: ['Meltio M600 + ABB IRB 2600', 'Haas VF-2 työstökeskus', 'MiR250 AMR robotti', 'FASTEMS MMS'],
+      items: ['Meltio M600 + ABB IRB 2600', 'DN Solutions DNM 5700', 'MiR250 AMR robotti', 'FASTEMS MMS'],
     },
     {
       id: 'ded',

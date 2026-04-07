@@ -15,7 +15,7 @@ const integrationNodes = [
   { id: 'odoo',     label: 'Odoo ERP',       x: 350, y: 20,  color: '#7B2D8E', w: 120, h: 40 },
   { id: 'fastems',  label: 'FASTEMS MMS',    x: 80,  y: 140, color: '#F59E0B', w: 130, h: 40 },
   { id: 'meltio',   label: 'Meltio M600',    x: 280, y: 240, color: '#3B82F6', w: 110, h: 40 },
-  { id: 'haas',     label: 'Haas VF-2',      x: 430, y: 240, color: '#10B981', w: 100, h: 40 },
+  { id: 'haas',     label: 'DNM 5700',       x: 430, y: 240, color: '#10B981', w: 100, h: 40 },
   { id: 'amr',      label: 'MiR250 AMR',     x: 590, y: 140, color: '#EC4899', w: 110, h: 40 },
   { id: 'edge',     label: 'Edge Computing', x: 350, y: 140, color: '#06B6D4', w: 120, h: 40 },
   { id: 'tsdb',     label: 'Time-series DB', x: 620, y: 240, color: '#6B7280', w: 120, h: 40 },

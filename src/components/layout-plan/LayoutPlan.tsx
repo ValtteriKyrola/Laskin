@@ -11,7 +11,7 @@ const CANVAS_H = 500;
 const machineTemplates: Array<{ type: Machine['type']; label: string; color: string; w: number; h: number }> = [
   { type: 'meltio',           label: 'Meltio M600',    color: '#7B2D8E', w: 120, h: 100 },
   { type: 'abb-robot',        label: 'ABB IRB 2600',   color: '#3B82F6', w: 80,  h: 80  },
-  { type: 'machining-center', label: 'Haas VF-2',      color: '#10B981', w: 110, h: 90  },
+  { type: 'machining-center', label: 'DNM 5700',       color: '#10B981', w: 130, h: 90  },
   { type: 'bridgeport',       label: 'Bridgeport',     color: '#14B8A6', w: 90,  h: 80  },
   { type: 'fastems',          label: 'FASTEMS MMS',    color: '#F59E0B', w: 150, h: 80  },
   { type: 'amr',              label: 'MiR250 AMR',     color: '#EC4899', w: 70,  h: 70  },

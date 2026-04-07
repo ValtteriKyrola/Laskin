@@ -9,7 +9,7 @@ import { generateSPCData } from '../../utils/calculations';
 import { useTheme } from '../../hooks/useTheme';
 
 const archNodes = [
-  { id: 'sensors',   label: 'Anturit & laitteet', sublabel: 'Meltio, Haas, AMR, mittaus',   x: 30,  y: 100, w: 140, h: 50, color: '#3B82F6' },
+  { id: 'sensors',   label: 'Anturit & laitteet', sublabel: 'Meltio, DNM 5700, AMR, mittaus',   x: 30,  y: 100, w: 140, h: 50, color: '#3B82F6' },
   { id: 'opcua',     label: 'OPC-UA / MQTT',       sublabel: 'Protokollamuunnos',            x: 230, y: 100, w: 130, h: 50, color: '#06B6D4' },
   { id: 'edge',      label: 'Edge Computing',       sublabel: 'Raspberry Pi / IPC',           x: 420, y: 100, w: 130, h: 50, color: '#7B2D8E' },
   { id: 'tsdb',      label: 'Time-series DB',       sublabel: 'InfluxDB / TimescaleDB',       x: 610, y: 60,  w: 140, h: 50, color: '#10B981' },
@@ -38,7 +38,7 @@ const qualitySteps = [
   { step: '3', label: 'Visuaalinen tarkastus', desc: 'Kamerajärjestelmä pinnan laadun tarkastukseen' },
   { step: '4', label: 'CMM-mittaus',           desc: 'Koordinaattimittaus: geometria, toleranssit ±0.1mm' },
   { step: '5', label: 'Pinnankarheuden mittaus', desc: 'Ra-arvo tarkastus (tavoite Ra ≤ 6.3µm ennen jälkikäsittelyä)' },
-  { step: '6', label: 'Koneistus (Haas VF-2)', desc: 'Viimeistelevä koneistus toleransseihin IT7–IT8' },
+  { step: '6', label: 'Koneistus (DNM 5700)', desc: 'Viimeistelevä koneistus toleransseihin IT7–IT8' },
   { step: '7', label: 'Loppumittaus',          desc: 'CMM + pinnankarheus. SPC-seuranta – hyväksyntä/hylkäys' },
   { step: '8', label: 'Hyväksyntä / arkistointi', desc: 'Mittauspöytäkirja Odoo Quality → jäljitettävyys' },
 ];
@@ -211,7 +211,7 @@ export default function DataQuality() {
       </div>
 
       {/* SPC params */}
-      <Card title="SPC-parametrit (simuloitu: Haas VF-2, reikähalkaisija ⌀100.000 mm)" accent>
+      <Card title="SPC-parametrit (simuloitu: DNM 5700, reikähalkaisija ⌀100.000 mm)" accent>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
           {[
             { label: 'Kohdemitto', value: '100.000 mm', color: 'text-neutral-900 dark:text-neutral-100' },
