@@ -21,7 +21,7 @@ function getOrCreateUserName(): string {
 }
 
 export function useSession() {
-  const { sessionId, setSessionId, userName, setUserName, setInvestments, setLayouts, setDEDInput, setFASTEMTree } = useStore();
+  const { sessionId, setSessionId, userName, setUserName, setInvestments, setLayouts, setDEDInput, setFASTEMTree, addToast } = useStore();
 
   useEffect(() => {
     const name = getOrCreateUserName();
@@ -69,7 +69,7 @@ export function useSession() {
       .single();
 
     if (error || !data) {
-      console.error('Sessio ei onnistu:', error);
+      addToast({ message: 'Sessio ei onnistu – tarkista verkkoyhteys', type: 'error' });
       return;
     }
 

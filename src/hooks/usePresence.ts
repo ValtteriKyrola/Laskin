@@ -52,7 +52,9 @@ export function usePresence() {
       });
 
     return () => { supabase.removeChannel(channel); };
-  }, [sessionId, userName]); // eslint-disable-line react-hooks/exhaustive-deps
+    // activeTab intentionally excluded: tab updates are handled by the separate effect below
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, userName]);
 
   // Update presence when tab changes
   useEffect(() => {

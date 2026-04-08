@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Card } from '../ui';
 
@@ -250,9 +250,26 @@ const INITIAL: Machine[] = [
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+const STORAGE_KEY = 'fieldlab-budget-v1';
+
+function loadSaved(): { machines: Machine[]; marginPct: number } | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function InvestmentCalculator() {
-  const [machines, setMachines] = useState<Machine[]>(INITIAL);
-  const [marginPct, setMarginPct] = useState(15);
+  const saved = loadSaved();
+  const [machines, setMachines] = useState<Machine[]>(saved?.machines ?? INITIAL);
+  const [marginPct, setMarginPct] = useState(saved?.marginPct ?? 15);
+
+  // Persist changes to localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ machines, marginPct }));
+  }, [machines, marginPct]);
 
   const grandTotal = machines.reduce((s, m) => s + machineTotal(m), 0);
   const margin = Math.round(grandTotal * marginPct / 100);
@@ -298,9 +315,11 @@ export default function InvestmentCalculator() {
           <p className="text-neutral-500 dark:text-neutral-400 text-xs mt-0.5">Optiorivit voidaan kytkeä päälle/pois · kaikki summat muokattavissa</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs text-neutral-500">Marginaali</span>
+          <label htmlFor="margin-pct" className="text-xs text-neutral-500">Marginaali</label>
           <input
+            id="margin-pct"
             type="number" min={0} max={50}
+            aria-label="Varmuusmarginaali prosentteina"
             className="w-16 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded-lg px-2 py-1 text-sm text-center font-mono focus:outline-none focus:border-primary-500"
             value={marginPct}
             onChange={e => setMarginPct(Number(e.target.value))}

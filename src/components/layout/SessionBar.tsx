@@ -99,6 +99,7 @@ export default function SessionBar({ compact = false }: SessionBarProps) {
         <div className="flex items-center gap-1">
           <input
             autoFocus
+            aria-label="Muuta nimesi"
             className="bg-neutral-100 dark:bg-neutral-800 border border-primary-500 rounded-lg px-2 py-1 text-xs text-neutral-900 dark:text-neutral-100 w-28 focus:outline-none"
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}

@@ -77,7 +77,9 @@ export function useRealtime() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Zustand setters are stable references and don't need to be listed
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId]);
 
   // --- Push local changes to Supabase (debounced) ---
   const pushInvestments = useRef(
