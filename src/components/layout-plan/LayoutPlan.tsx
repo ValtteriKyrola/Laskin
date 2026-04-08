@@ -344,8 +344,8 @@ export default function LayoutPlan() {
               {/* Right partition – horizontal (y=100, x=360→640) */}
               <line x1={360} y1={100} x2={640} y2={100}
                 stroke="#1E293B" strokeWidth={8} strokeLinecap="square" />
-              {/* Right partition – vertical (x=640, y=100→380) */}
-              <line x1={640} y1={100} x2={640} y2={380}
+              {/* Right partition – vertical at LEFT end of horizontal (x=360, y=100→380) */}
+              <line x1={360} y1={100} x2={360} y2={380}
                 stroke="#1E293B" strokeWidth={8} strokeLinecap="square" />
             </g>
             <text x={20} y={24} fill="#94A3B8" fontSize="11" fontFamily="system-ui">FieldLab – tuotantosolu</text>
