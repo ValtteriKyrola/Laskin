@@ -1,150 +1,226 @@
 import { useState } from 'react';
-import { useStore } from '../../store/useStore';
-import { calculateInvestment, formatCurrency, formatNumber } from '../../utils/calculations';
-import type { Investment } from '../../types';
-import { Card, Modal, Button, Badge, Slider, Input } from '../ui';
-import { PlusCircle, Edit2, Trash2 } from 'lucide-react';
-import { chartColors } from '../../styles/chartTheme';
+import { PlusCircle, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Button, Card } from '../ui';
 
-const emptyInvestment: Omit<Investment, 'id'> = {
-  name: '',
-  shortName: '',
-  cost: 0,
-  annualSavings: 0,
-  annualMaintenanceCost: 0,
-  lifespan: 10,
-  description: '',
-  color: '#7B2D8E',
-};
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface CostRow {
+  id: string;
+  label: string;
+  amount: number;
+  note: string;
+}
+
+interface MachineItem {
+  id: string;
+  name: string;
+  expanded: boolean;
+  rows: CostRow[];
+}
+
+// ── Default data ──────────────────────────────────────────────────────────────
+
+const DEFAULT_ROW_LABELS = [
+  'Hankintahinta',
+  'Kuljetus & rahti',
+  'Asennus & käyttöönotto',
+  'Sähkötyöt',
+  'Koulutus',
+  'Muut',
+];
+
+function newRow(label = ''): CostRow {
+  return { id: `r-${Date.now()}-${Math.random()}`, label, amount: 0, note: '' };
+}
+
+function newMachine(name = ''): MachineItem {
+  return {
+    id: `m-${Date.now()}`,
+    name,
+    expanded: true,
+    rows: DEFAULT_ROW_LABELS.map(newRow),
+  };
+}
+
+const INITIAL_MACHINES: MachineItem[] = [
+  { ...newMachine('DN Solutions DNM 5700'), id: 'm-1' },
+  { ...newMachine('MiR250 AMR'), id: 'm-2' },
+  { ...newMachine('UR10e Cobot'), id: 'm-3' },
+];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const fmt = (n: number) =>
+  n.toLocaleString('fi-FI', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' €';
+
+function machineTotal(m: MachineItem) {
+  return m.rows.reduce((s, r) => s + (r.amount || 0), 0);
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function InvestmentCalculator() {
-  const { investments, setInvestments, discountRate, setDiscountRate } = useStore();
-  const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<Omit<Investment, 'id'>>(emptyInvestment);
-  const [showForm, setShowForm] = useState(false);
-  const [sensitivity, setSensitivity] = useState({ savings: 0, cost: 0 });
+  const [machines, setMachines] = useState<MachineItem[]>(INITIAL_MACHINES);
+  const [newName, setNewName] = useState('');
 
-  const calcs = investments.map((inv) => {
-    const adj: Investment = {
-      ...inv,
-      annualSavings: inv.annualSavings * (1 + sensitivity.savings / 100),
-      cost: inv.cost * (1 + sensitivity.cost / 100),
-    };
-    return { inv, calc: calculateInvestment(adj, discountRate) };
-  });
+  const grandTotal = machines.reduce((s, m) => s + machineTotal(m), 0);
 
-  const bestId = calcs.length > 0
-    ? calcs.reduce((b, c) => c.calc.npv > b.calc.npv ? c : b).inv.id
-    : null;
+  // Machine-level helpers
+  const toggleExpand = (mid: string) =>
+    setMachines((ms) => ms.map((m) => m.id === mid ? { ...m, expanded: !m.expanded } : m));
 
-const openEdit = (inv: Investment) => { setForm({ ...inv }); setEditId(inv.id); setShowForm(true); };
-  const openNew  = () => { setForm({ ...emptyInvestment, color: chartColors[investments.length % chartColors.length] }); setEditId(null); setShowForm(true); };
+  const updateMachineName = (mid: string, name: string) =>
+    setMachines((ms) => ms.map((m) => m.id === mid ? { ...m, name } : m));
 
-  const saveForm = () => {
-    if (editId) setInvestments(investments.map((i) => (i.id === editId ? { id: editId, ...form } : i)));
-    else setInvestments([...investments, { id: `inv-${Date.now()}`, ...form }]);
-    setShowForm(false);
+  const deleteMachine = (mid: string) =>
+    setMachines((ms) => ms.filter((m) => m.id !== mid));
+
+  const addMachine = () => {
+    if (!newName.trim()) return;
+    setMachines((ms) => [...ms, newMachine(newName.trim())]);
+    setNewName('');
   };
 
-  const deleteInv = (id: string) => setInvestments(investments.filter((i) => i.id !== id));
+  // Row-level helpers
+  const updateRow = (mid: string, rid: string, patch: Partial<CostRow>) =>
+    setMachines((ms) =>
+      ms.map((m) =>
+        m.id === mid
+          ? { ...m, rows: m.rows.map((r) => (r.id === rid ? { ...r, ...patch } : r)) }
+          : m
+      )
+    );
+
+  const addRow = (mid: string) =>
+    setMachines((ms) =>
+      ms.map((m) => m.id === mid ? { ...m, rows: [...m.rows, newRow()] } : m)
+    );
+
+  const deleteRow = (mid: string, rid: string) =>
+    setMachines((ms) =>
+      ms.map((m) => m.id === mid ? { ...m, rows: m.rows.filter((r) => r.id !== rid) } : m)
+    );
 
   return (
-    <div className="p-4 lg:p-6 space-y-4 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Investointilaskin</h1>
-          <p className="text-neutral-500 dark:text-neutral-400 text-xs mt-0.5">NPV, IRR, ROI ja takaisinmaksuaika – herkkyysanalyysi</p>
-        </div>
-        <Button onClick={openNew} icon={<PlusCircle size={16} />}>Lisää investointi</Button>
+    <div className="p-4 lg:p-6 space-y-4 max-w-5xl mx-auto">
+
+      {/* Header */}
+      <div>
+        <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Investointibudjetti</h1>
+        <p className="text-neutral-500 dark:text-neutral-400 text-xs mt-0.5">
+          Koneet ja laitteet · kustannukset eriteltynä
+        </p>
       </div>
 
-      {/* Settings */}
-      <Card title="Laskenta-asetukset" accent>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Slider label="Diskonttokorko" min={0} max={15} step={0.5} value={discountRate} onChange={setDiscountRate} unit="%" />
-          <Slider label="Vuosisäästön herkkyys" min={-30} max={30} step={5} value={sensitivity.savings}
-            onChange={(v) => setSensitivity((s) => ({ ...s, savings: v }))} unit="%" />
-          <Slider label="Hankintahinnan muutos" min={-20} max={40} step={5} value={sensitivity.cost}
-            onChange={(v) => setSensitivity((s) => ({ ...s, cost: v }))} unit="%" />
-        </div>
-      </Card>
+      {/* Machine cards */}
+      {machines.map((machine) => {
+        const total = machineTotal(machine);
+        return (
+          <Card key={machine.id} accent>
+            {/* Machine header row */}
+            <div className="flex items-center gap-2 mb-2">
+              <button
+                onClick={() => toggleExpand(machine.id)}
+                className="text-neutral-400 hover:text-primary-500 transition-colors shrink-0"
+              >
+                {machine.expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              </button>
 
-      {/* Comparison table */}
-      <Card title="Vertailutaulukko" accent>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400">
-                {['Investointi', 'Hankinta', 'Vuosi CF', 'Takaisinmaksu', 'ROI', 'NPV', 'IRR', ''].map((h) => (
-                  <th key={h} className={`py-2.5 px-2 font-semibold uppercase tracking-wider ${h === '' || h === 'Hankinta' || h === 'Vuosi CF' || h === 'Takaisinmaksu' || h === 'ROI' || h === 'NPV' || h === 'IRR' ? 'text-right' : 'text-left'}`}>{h}</th>
+              <input
+                className="flex-1 bg-transparent text-neutral-900 dark:text-neutral-100 font-semibold text-sm focus:outline-none border-b border-transparent focus:border-primary-500 transition-colors"
+                value={machine.name}
+                onChange={(e) => updateMachineName(machine.id, e.target.value)}
+                placeholder="Koneen nimi"
+              />
+
+              <span className="text-sm font-bold font-mono text-primary-500 shrink-0 ml-2">
+                {fmt(total)}
+              </span>
+
+              <button
+                onClick={() => deleteMachine(machine.id)}
+                className="p-1 text-neutral-300 hover:text-danger transition-colors shrink-0"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+
+            {/* Cost rows */}
+            {machine.expanded && (
+              <div className="mt-3 space-y-1.5">
+                <div className="grid grid-cols-12 gap-2 text-xs text-neutral-400 dark:text-neutral-500 uppercase tracking-wider font-semibold mb-1 px-1">
+                  <span className="col-span-4">Erä</span>
+                  <span className="col-span-3 text-right">Summa (€)</span>
+                  <span className="col-span-4">Huomio</span>
+                  <span className="col-span-1" />
+                </div>
+
+                {machine.rows.map((row) => (
+                  <div key={row.id} className="grid grid-cols-12 gap-2 items-center group">
+                    <input
+                      className="col-span-4 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg px-2 py-1.5 text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-primary-500"
+                      value={row.label}
+                      onChange={(e) => updateRow(machine.id, row.id, { label: e.target.value })}
+                      placeholder="Kustannuserä"
+                    />
+                    <input
+                      type="number"
+                      className="col-span-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg px-2 py-1.5 text-sm text-right font-mono text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-primary-500"
+                      value={row.amount || ''}
+                      onChange={(e) => updateRow(machine.id, row.id, { amount: Number(e.target.value) })}
+                      placeholder="0"
+                    />
+                    <input
+                      className="col-span-4 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg px-2 py-1.5 text-sm text-neutral-500 dark:text-neutral-400 focus:outline-none focus:border-primary-500"
+                      value={row.note}
+                      onChange={(e) => updateRow(machine.id, row.id, { note: e.target.value })}
+                      placeholder="Lisätieto..."
+                    />
+                    <button
+                      onClick={() => deleteRow(machine.id, row.id)}
+                      className="col-span-1 flex justify-center p-1 text-neutral-200 dark:text-neutral-700 hover:text-danger transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {calcs.map(({ inv, calc }) => (
-                <tr key={inv.id} className={`border-b border-neutral-100 dark:border-neutral-800 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50 ${inv.id === bestId ? 'bg-primary-50 dark:bg-primary-900/20' : ''}`}>
-                  <td className="py-2 px-2">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: inv.color }} />
-                      <span className="text-neutral-900 dark:text-neutral-100 font-medium">{inv.shortName}</span>
-                      {inv.id === bestId && <Badge variant="primary" size="sm">Paras</Badge>}
-                    </div>
-                    <div className="text-neutral-400 text-xs mt-0.5 pl-4">{inv.description.slice(0, 45)}{inv.description.length > 45 ? '…' : ''}</div>
-                  </td>
-                  <td className="py-2 px-2 text-right text-neutral-600 dark:text-neutral-300">{formatCurrency(inv.cost)}</td>
-                  <td className="py-2 px-2 text-right text-neutral-600 dark:text-neutral-300">{formatCurrency(calc.annualNetCashFlow)}</td>
-                  <td className="py-2 px-2 text-right text-neutral-600 dark:text-neutral-300">
-                    {calc.paybackPeriod === Infinity ? '∞' : formatNumber(calc.paybackPeriod)} v
-                  </td>
-                  <td className={`py-2 px-2 text-right font-semibold ${calc.roi > 0 ? 'text-success' : 'text-danger'}`}>
-                    {formatNumber(calc.roi, 0)} %
-                  </td>
-                  <td className={`py-2 px-2 text-right font-semibold ${calc.npv > 0 ? 'text-success' : 'text-danger'}`}>
-                    {formatCurrency(calc.npv)}
-                  </td>
-                  <td className={`py-2 px-2 text-right font-semibold ${calc.irr > discountRate ? 'text-success' : 'text-warning'}`}>
-                    {formatNumber(calc.irr, 1)} %
-                  </td>
-                  <td className="py-2 px-2 text-right">
-                    <button onClick={() => openEdit(inv)} className="p-1 text-neutral-400 hover:text-primary-500 transition-colors mr-1"><Edit2 size={13} /></button>
-                    <button onClick={() => deleteInv(inv.id)} className="p-1 text-neutral-400 hover:text-danger transition-colors"><Trash2 size={13} /></button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
 
+                {/* Subtotal + add row */}
+                <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800 mt-2">
+                  <button
+                    onClick={() => addRow(machine.id)}
+                    className="text-xs text-primary-500 hover:text-primary-400 flex items-center gap-1 transition-colors"
+                  >
+                    <PlusCircle size={13} /> Lisää rivi
+                  </button>
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                    Yhteensä: <span className="font-bold font-mono text-neutral-900 dark:text-neutral-100">{fmt(total)}</span>
+                  </span>
+                </div>
+              </div>
+            )}
+          </Card>
+        );
+      })}
 
-      {/* Modal */}
-      <Modal open={showForm} onClose={() => setShowForm(false)} title={editId ? 'Muokkaa investointia' : 'Lisää investointi'} size="lg">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2">
-            <Input label="Nimi" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-          </div>
-          <Input label="Lyhyt nimi" value={form.shortName} onChange={(e) => setForm((f) => ({ ...f, shortName: e.target.value }))} />
-          <div>
-            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Väri</label>
-            <input type="color" className="w-full h-9 rounded-lg border border-neutral-300 dark:border-neutral-600 cursor-pointer bg-neutral-50 dark:bg-neutral-900 px-1"
-              value={form.color} onChange={(e) => setForm((f) => ({ ...f, color: e.target.value }))} />
-          </div>
-          <Input label="Hankintakustannus (€)" type="number" value={String(form.cost)} onChange={(e) => setForm((f) => ({ ...f, cost: Number(e.target.value) }))} />
-          <Input label="Vuotuinen säästö (€)" type="number" value={String(form.annualSavings)} onChange={(e) => setForm((f) => ({ ...f, annualSavings: Number(e.target.value) }))} />
-          <Input label="Ylläpito/vuosi (€)" type="number" value={String(form.annualMaintenanceCost)} onChange={(e) => setForm((f) => ({ ...f, annualMaintenanceCost: Number(e.target.value) }))} />
-          <Input label="Käyttöikä (vuotta)" type="number" value={String(form.lifespan)} onChange={(e) => setForm((f) => ({ ...f, lifespan: Number(e.target.value) }))} />
-          <div className="col-span-2">
-            <label className="block text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-1">Kuvaus</label>
-            <textarea
-              className="w-full bg-neutral-50 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-600 rounded-lg px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
-              rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
-          </div>
-        </div>
-        <div className="flex gap-3 justify-end mt-4">
-          <Button variant="secondary" onClick={() => setShowForm(false)}>Peruuta</Button>
-          <Button onClick={saveForm}>Tallenna</Button>
-        </div>
-      </Modal>
+      {/* Add machine */}
+      <div className="flex gap-2">
+        <input
+          className="flex-1 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-3 py-2 text-sm text-neutral-900 dark:text-neutral-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addMachine()}
+          placeholder="Uuden koneen / laitteen nimi..."
+        />
+        <Button onClick={addMachine} icon={<PlusCircle size={15} />}>Lisää kone</Button>
+      </div>
+
+      {/* Grand total */}
+      <div className="bg-primary-600 dark:bg-primary-700 rounded-2xl p-4 flex items-center justify-between">
+        <span className="text-white font-semibold">Kokonaisbudjetti</span>
+        <span className="text-white text-2xl font-bold font-mono">{fmt(grandTotal)}</span>
+      </div>
+
     </div>
   );
 }
