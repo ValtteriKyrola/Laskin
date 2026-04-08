@@ -55,7 +55,7 @@ function machineTotal(m: Machine) {
 
 const INITIAL: Machine[] = [
   {
-    id: 'm1', icon: '🔧', name: 'Pääkone: Bridgeport → DN Solutions DNM 5700', expanded: true,
+    id: 'm1', icon: '🔧', name: 'Pääkone: Bridgeport → DN Solutions DNM 5700', expanded: false,
     groups: [
       group('Vanhan koneen purku', [
         row('Sähköliitäntöjen irrotus', 400),
@@ -128,7 +128,7 @@ const INITIAL: Machine[] = [
     ],
   },
   {
-    id: 'm2', icon: '🤖', name: 'Mobiilirobotti (AMR) – MiR250', expanded: true,
+    id: 'm2', icon: '🤖', name: 'Mobiilirobotti (AMR) – MiR250', expanded: false,
     groups: [
       group('Laitteet', [
         row('AMR-alusta (MiR250)', 35000),
@@ -165,7 +165,7 @@ const INITIAL: Machine[] = [
     ],
   },
   {
-    id: 'm3', icon: '🦾', name: 'Nivelvarsirobotti / Cobot – UR10e', expanded: true,
+    id: 'm3', icon: '🦾', name: 'Nivelvarsirobotti / Cobot – UR10e', expanded: false,
     groups: [
       group('Laitteet', [
         row('Cobot (UR10e)', 35000),
@@ -211,7 +211,7 @@ const INITIAL: Machine[] = [
     ],
   },
   {
-    id: 'm4', icon: '🏭', name: 'Jaetut kustannukset', expanded: true,
+    id: 'm4', icon: '🏭', name: 'Jaetut kustannukset', expanded: false,
     groups: [
       group('Yleinen infrastruktuuri', [
         row('Lattian kokonaispinnoitus', 4000),
@@ -263,7 +263,12 @@ function loadSaved(): { machines: Machine[]; marginPct: number } | null {
 
 export default function InvestmentCalculator() {
   const saved = loadSaved();
-  const [machines, setMachines] = useState<Machine[]>(saved?.machines ?? INITIAL);
+  // Always start collapsed regardless of saved state
+  const initialMachines = (saved?.machines ?? INITIAL).map(m => ({
+    ...m, expanded: false,
+    groups: m.groups.map(g => ({ ...g, expanded: true })),
+  }));
+  const [machines, setMachines] = useState<Machine[]>(initialMachines);
   const [marginPct, setMarginPct] = useState(saved?.marginPct ?? 15);
 
   // Persist changes to localStorage
