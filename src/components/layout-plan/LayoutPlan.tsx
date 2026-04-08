@@ -335,14 +335,17 @@ export default function LayoutPlan() {
               {/* Outer room boundary */}
               <rect x={4} y={4} width={CANVAS_W - 8} height={CANVAS_H - 8}
                 fill="none" stroke="#1E293B" strokeWidth={8} strokeLinejoin="miter" />
-              {/* Inner partition – left vertical: 6.0 m from left → x=200, from top wall down 7.5 m → y=240 */}
-              <line x1={200} y1={4} x2={200} y2={240}
+              {/* Left partition – vertical (x=200, from top outer wall down to y=400) */}
+              <line x1={200} y1={4} x2={200} y2={400}
                 stroke="#1E293B" strokeWidth={8} strokeLinecap="square" />
-              {/* Inner partition – horizontal: y=240, 9.0 m right → x=200→480 */}
-              <line x1={200} y1={240} x2={480} y2={240}
+              {/* Left partition – horizontal (y=400, from left outer wall to x=200) */}
+              <line x1={4} y1={400} x2={200} y2={400}
                 stroke="#1E293B" strokeWidth={8} strokeLinecap="square" />
-              {/* Inner partition – right vertical: x=480, from junction down 5.8 m → y=420 */}
-              <line x1={480} y1={240} x2={480} y2={420}
+              {/* Right partition – horizontal (y=100, x=360→640) */}
+              <line x1={360} y1={100} x2={640} y2={100}
+                stroke="#1E293B" strokeWidth={8} strokeLinecap="square" />
+              {/* Right partition – vertical (x=640, y=100→380) */}
+              <line x1={640} y1={100} x2={640} y2={380}
                 stroke="#1E293B" strokeWidth={8} strokeLinecap="square" />
             </g>
             <text x={20} y={24} fill="#94A3B8" fontSize="11" fontFamily="system-ui">FieldLab – tuotantosolu</text>
