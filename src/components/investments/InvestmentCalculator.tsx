@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { Card } from '../ui';
+import { ChevronDown, ChevronRight, AlertCircle } from 'lucide-react';
+import { Badge } from '../ui';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -305,166 +305,263 @@ export default function InvestmentCalculator() {
           : g) }
       : m));
 
+  // Bar widths for summary chart
+  const barMax = grandTotal > 0 ? grandTotal : 1;
+
   return (
     <div className="p-4 lg:p-6 space-y-5 max-w-5xl mx-auto">
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">TAMK FieldLab – Investointien kustannuserittely</h1>
-          <p className="text-neutral-500 dark:text-neutral-400 text-xs mt-0.5">Optiorivit voidaan kytkeä päälle/pois · kaikki summat muokattavissa</p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <label htmlFor="margin-pct" className="text-xs text-neutral-500">Marginaali</label>
-          <input
-            id="margin-pct"
-            type="number" min={0} max={50}
-            aria-label="Varmuusmarginaali prosentteina"
-            className="w-16 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 rounded-lg px-2 py-1 text-sm text-center font-mono focus:outline-none focus:border-primary-500"
-            value={marginPct}
-            onChange={e => setMarginPct(Number(e.target.value))}
-          />
-          <span className="text-xs text-neutral-500">%</span>
-        </div>
+      {/* ── Header ── */}
+      <div>
+        <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
+          TAMK FieldLab – Investointien kustannuserittely
+        </h1>
+        <p className="text-neutral-500 dark:text-neutral-400 text-xs mt-0.5">
+          Optiorivit kytketään päälle checkboxilla · kaikki summat muokattavissa
+        </p>
       </div>
 
-      {/* Machine cards */}
+      {/* ── Summary KPI bar ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {machines.map(m => {
+          const t = machineTotal(m);
+          const pct = grandTotal > 0 ? Math.round(t / grandTotal * 100) : 0;
+          return (
+            <div key={m.id} className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl p-4 shadow-sm">
+              <div className="text-xl mb-1">{m.icon}</div>
+              <div className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 leading-tight mb-2 line-clamp-2">{m.name}</div>
+              <div className="text-lg font-bold font-mono text-neutral-900 dark:text-neutral-100">{fmt(t)}</div>
+              <div className="mt-2 h-1.5 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
+                <div className="h-full bg-primary-500 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+              </div>
+              <div className="text-[10px] text-neutral-400 mt-1">{pct}% kokonaisbudjetista</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Machine cards ── */}
       {machines.map(machine => {
         const mTotal = machineTotal(machine);
         return (
-          <Card key={machine.id} accent>
+          <div key={machine.id} className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-sm overflow-hidden">
+
             {/* Machine header */}
             <button
               onClick={() => toggleMachine(machine.id)}
-              className="w-full flex items-center gap-2 text-left"
+              className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-neutral-50 dark:hover:bg-neutral-750 transition-colors border-b border-neutral-100 dark:border-neutral-700"
             >
-              <span className="text-lg">{machine.icon}</span>
-              <span className="flex-1 font-bold text-neutral-900 dark:text-neutral-100 text-sm">{machine.name}</span>
-              <span className="font-bold font-mono text-primary-500 text-sm mr-2">{fmt(mTotal)}</span>
-              {machine.expanded ? <ChevronDown size={16} className="text-neutral-400 shrink-0" /> : <ChevronRight size={16} className="text-neutral-400 shrink-0" />}
+              <span className="text-2xl shrink-0">{machine.icon}</span>
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-neutral-900 dark:text-neutral-100 text-sm leading-tight">{machine.name}</div>
+                <div className="text-[11px] text-neutral-400 mt-0.5">
+                  {machine.groups.length} kategoriaa · {machine.groups.reduce((s, g) => s + g.rows.length, 0)} riviä
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="font-bold font-mono text-primary-600 dark:text-primary-400 text-base">{fmt(mTotal)}</div>
+                <div className="text-[10px] text-neutral-400 mt-0.5">{grandTotal > 0 ? Math.round(mTotal/grandTotal*100) : 0}% budjetista</div>
+              </div>
+              {machine.expanded
+                ? <ChevronDown size={16} className="text-neutral-400 shrink-0 ml-1" />
+                : <ChevronRight size={16} className="text-neutral-400 shrink-0 ml-1" />}
             </button>
 
             {machine.expanded && (
-              <div className="mt-4 space-y-3">
+              <div className="divide-y divide-neutral-100 dark:divide-neutral-700/60">
                 {machine.groups.map(grp => {
                   const gTotal = groupTotal(grp);
+                  const hasOptions = grp.rows.some(r => r.optional);
                   return (
-                    <div key={grp.id} className="border border-neutral-100 dark:border-neutral-800 rounded-xl overflow-hidden">
+                    <div key={grp.id}>
                       {/* Group header */}
                       <button
                         onClick={() => toggleGroup(machine.id, grp.id)}
-                        className="w-full flex items-center gap-2 px-3 py-2 bg-neutral-50 dark:bg-neutral-800/60 text-left hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                        className="w-full flex items-center gap-3 px-5 py-3 bg-neutral-50/70 dark:bg-neutral-800/80 text-left hover:bg-neutral-100 dark:hover:bg-neutral-700/50 transition-colors"
                       >
-                        {grp.expanded ? <ChevronDown size={13} className="text-neutral-400 shrink-0" /> : <ChevronRight size={13} className="text-neutral-400 shrink-0" />}
-                        <span className="flex-1 text-xs font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wide">{grp.label}</span>
-                        <span className="text-xs font-mono font-semibold text-neutral-600 dark:text-neutral-300">{fmt(gTotal)}</span>
+                        <div className="w-1.5 h-4 rounded-full bg-primary-400 dark:bg-primary-500 shrink-0" />
+                        {grp.expanded
+                          ? <ChevronDown size={13} className="text-neutral-400 shrink-0" />
+                          : <ChevronRight size={13} className="text-neutral-400 shrink-0" />}
+                        <span className="flex-1 text-xs font-semibold text-neutral-700 dark:text-neutral-300 uppercase tracking-wider">{grp.label}</span>
+                        {hasOptions && <Badge variant="neutral" size="sm">sis. optiot</Badge>}
+                        <span className="text-sm font-bold font-mono text-neutral-700 dark:text-neutral-200 ml-2">{fmt(gTotal)}</span>
                       </button>
 
                       {/* Rows */}
                       {grp.expanded && (
-                        <div className="divide-y divide-neutral-50 dark:divide-neutral-800/60">
-                          {grp.rows.map(r => (
+                        <>
+                          {/* Column headers */}
+                          <div className="grid grid-cols-12 gap-2 px-5 py-2 bg-neutral-50/40 dark:bg-neutral-800/40 border-b border-neutral-100 dark:border-neutral-700/40">
+                            <span className="col-span-1" />
+                            <span className="col-span-6 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">Kustannuserä</span>
+                            <span className="col-span-4 text-[10px] font-semibold uppercase tracking-wider text-neutral-400 text-right">Summa</span>
+                            <span className="col-span-1" />
+                          </div>
+
+                          {grp.rows.map((r, idx) => (
                             <div
                               key={r.id}
-                              className={`flex items-center gap-2 px-3 py-2 ${!r.enabled ? 'opacity-40' : ''}`}
+                              className={[
+                                'grid grid-cols-12 gap-2 items-center px-5 py-2.5 transition-colors',
+                                idx % 2 === 0 ? 'bg-white dark:bg-neutral-800' : 'bg-neutral-50/50 dark:bg-neutral-800/60',
+                                !r.enabled ? 'opacity-40' : '',
+                              ].join(' ')}
                             >
-                              {/* Optional toggle */}
-                              {r.optional ? (
-                                <button
-                                  onClick={() => toggleRow(machine.id, grp.id, r.id)}
-                                  className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                                    r.enabled
-                                      ? 'bg-primary-500 border-primary-500 text-white'
-                                      : 'border-neutral-300 dark:border-neutral-600'
-                                  }`}
-                                >
-                                  {r.enabled && <span className="text-[9px] leading-none">✓</span>}
-                                </button>
-                              ) : (
-                                <span className="w-4 h-4 shrink-0 flex items-center justify-center">
+                              {/* Checkbox or bullet */}
+                              <div className="col-span-1 flex justify-center">
+                                {r.optional ? (
+                                  <button
+                                    onClick={() => toggleRow(machine.id, grp.id, r.id)}
+                                    aria-label={r.enabled ? 'Poista optio' : 'Lisää optio'}
+                                    className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all ${
+                                      r.enabled
+                                        ? 'bg-primary-500 border-primary-500'
+                                        : 'border-neutral-300 dark:border-neutral-600 hover:border-primary-400'
+                                    }`}
+                                  >
+                                    {r.enabled && <span className="text-white text-[9px] leading-none font-bold">✓</span>}
+                                  </button>
+                                ) : (
                                   <span className="w-1.5 h-1.5 rounded-full bg-neutral-300 dark:bg-neutral-600" />
-                                </span>
-                              )}
+                                )}
+                              </div>
 
                               {/* Label */}
-                              <span className={`flex-1 text-sm ${r.optional ? 'text-neutral-500 dark:text-neutral-400 italic' : 'text-neutral-800 dark:text-neutral-200'}`}>
-                                {r.label}
-                                {r.optional && <span className="ml-1 text-[10px] text-neutral-400 not-italic">(optio)</span>}
-                              </span>
+                              <div className="col-span-6">
+                                <span className={`text-sm ${
+                                  r.optional
+                                    ? 'text-neutral-500 dark:text-neutral-400 italic'
+                                    : 'text-neutral-800 dark:text-neutral-200'
+                                }`}>
+                                  {r.label}
+                                </span>
+                                {r.optional && (
+                                  <span className="ml-2 inline-flex items-center gap-0.5 text-[10px] text-amber-500 dark:text-amber-400 not-italic font-medium">
+                                    optio
+                                  </span>
+                                )}
+                              </div>
 
-                              {/* Amount input */}
-                              <input
-                                type="number"
-                                className="w-28 text-right font-mono text-sm bg-transparent border-b border-transparent hover:border-neutral-300 dark:hover:border-neutral-600 focus:border-primary-500 focus:outline-none text-neutral-700 dark:text-neutral-300 py-0.5 transition-colors"
-                                value={r.amount}
-                                onChange={e => updateAmount(machine.id, grp.id, r.id, Number(e.target.value))}
-                                disabled={!r.enabled}
-                              />
-                              <span className="text-xs text-neutral-400 w-3 shrink-0">€</span>
+                              {/* Amount input — proper box */}
+                              <div className="col-span-4 flex items-center justify-end gap-1">
+                                <div className={`flex items-center gap-1 rounded-lg border px-2 py-1.5 transition-colors ${
+                                  r.enabled
+                                    ? 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-600 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/20'
+                                    : 'bg-neutral-100 dark:bg-neutral-800 border-neutral-100 dark:border-neutral-700'
+                                }`}>
+                                  <input
+                                    type="number"
+                                    aria-label={r.label}
+                                    className="w-20 text-right font-mono text-sm bg-transparent focus:outline-none text-neutral-800 dark:text-neutral-200 disabled:text-neutral-400"
+                                    value={r.amount}
+                                    onChange={e => updateAmount(machine.id, grp.id, r.id, Number(e.target.value))}
+                                    disabled={!r.enabled}
+                                  />
+                                  <span className="text-xs text-neutral-400 shrink-0">€</span>
+                                </div>
+                              </div>
+
+                              {/* Changed indicator */}
+                              <div className="col-span-1 flex justify-center">
+                                {r.amount !== r.amount && null /* placeholder */}
+                              </div>
                             </div>
                           ))}
 
-                          {/* Group subtotal */}
-                          <div className="flex justify-end px-3 py-2 bg-neutral-50 dark:bg-neutral-800/40">
-                            <span className="text-xs text-neutral-500 mr-2">Välisumma:</span>
-                            <span className="text-xs font-bold font-mono text-neutral-700 dark:text-neutral-200">{fmt(gTotal)}</span>
+                          {/* Group subtotal row */}
+                          <div className="flex items-center justify-end gap-3 px-5 py-2.5 bg-primary-50 dark:bg-primary-900/10 border-t border-primary-100 dark:border-primary-800/30">
+                            <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">Välisumma</span>
+                            <span className="text-sm font-bold font-mono text-primary-700 dark:text-primary-300 bg-primary-100 dark:bg-primary-900/30 px-3 py-1 rounded-lg">{fmt(gTotal)}</span>
                           </div>
-                        </div>
+                        </>
                       )}
                     </div>
                   );
                 })}
 
-                {/* Machine total */}
-                <div className="flex justify-end items-center gap-3 pt-1 border-t border-neutral-200 dark:border-neutral-700 mt-2">
-                  <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">{machine.icon} Yhteensä</span>
-                  <span className="font-bold font-mono text-base text-primary-600 dark:text-primary-400">{fmt(mTotal)}</span>
+                {/* Machine total footer */}
+                <div className="flex items-center justify-between px-5 py-4 bg-neutral-50 dark:bg-neutral-800/60">
+                  <span className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
+                    {machine.icon} {machine.name} – yhteensä
+                  </span>
+                  <span className="text-lg font-bold font-mono text-primary-600 dark:text-primary-400">{fmt(mTotal)}</span>
                 </div>
               </div>
             )}
-          </Card>
+          </div>
         );
       })}
 
-      {/* Summary */}
-      <Card accent>
-        <h2 className="text-sm font-bold text-neutral-900 dark:text-neutral-100 mb-3">Kokonaisyhteenveto</h2>
-        <div className="space-y-1.5">
-          {machines.map(m => (
-            <div key={m.id} className="flex justify-between text-sm">
-              <span className="text-neutral-600 dark:text-neutral-400">{m.icon} {m.name}</span>
-              <span className="font-mono font-semibold text-neutral-800 dark:text-neutral-200">{fmt(machineTotal(m))}</span>
+      {/* ── Summary card ── */}
+      <div className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-neutral-100 dark:border-neutral-700">
+          <h2 className="text-sm font-bold text-neutral-900 dark:text-neutral-100">Kokonaisyhteenveto</h2>
+        </div>
+
+        <div className="divide-y divide-neutral-100 dark:divide-neutral-700/60">
+          {machines.map(m => {
+            const t = machineTotal(m);
+            const pct = barMax > 0 ? t / barMax * 100 : 0;
+            return (
+              <div key={m.id} className="flex items-center gap-4 px-5 py-3">
+                <span className="text-lg shrink-0">{m.icon}</span>
+                <span className="flex-1 text-sm text-neutral-700 dark:text-neutral-300 min-w-0 truncate">{m.name}</span>
+                <div className="hidden sm:flex items-center gap-2 w-32">
+                  <div className="flex-1 h-1.5 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-primary-400 rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="text-[10px] text-neutral-400 w-7 text-right">{Math.round(pct)}%</span>
+                </div>
+                <span className="font-mono font-semibold text-neutral-800 dark:text-neutral-200 text-sm shrink-0">{fmt(t)}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="px-5 py-4 space-y-2 border-t border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/60">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-neutral-600 dark:text-neutral-400">Välisumma</span>
+            <span className="font-mono font-semibold text-neutral-800 dark:text-neutral-200">{fmt(grandTotal)}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-neutral-600 dark:text-neutral-400">Varmuusmarginaali</span>
+              <div className="flex items-center gap-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-600 rounded-lg px-2 py-0.5 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/20">
+                <label htmlFor="margin-pct" className="sr-only">Varmuusmarginaali prosentteina</label>
+                <input
+                  id="margin-pct"
+                  type="number" min={0} max={50}
+                  aria-label="Varmuusmarginaali prosentteina"
+                  className="w-10 text-center font-mono text-sm bg-transparent focus:outline-none text-neutral-800 dark:text-neutral-200"
+                  value={marginPct}
+                  onChange={e => setMarginPct(Number(e.target.value))}
+                />
+                <span className="text-xs text-neutral-400">%</span>
+              </div>
             </div>
-          ))}
-          <div className="border-t border-neutral-200 dark:border-neutral-700 pt-2 mt-2 space-y-1.5">
-            <div className="flex justify-between text-sm">
-              <span className="text-neutral-600 dark:text-neutral-400">Välisumma</span>
-              <span className="font-mono font-semibold text-neutral-800 dark:text-neutral-200">{fmt(grandTotal)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-neutral-600 dark:text-neutral-400">Varmuusmarginaali ({marginPct}%)</span>
-              <span className="font-mono font-semibold text-neutral-800 dark:text-neutral-200">{fmt(margin)}</span>
-            </div>
+            <span className="font-mono font-semibold text-neutral-800 dark:text-neutral-200">{fmt(margin)}</span>
           </div>
         </div>
 
-        {/* Grand total bar */}
-        <div className="mt-4 bg-primary-600 dark:bg-primary-700 rounded-xl p-4 flex items-center justify-between">
-          <span className="text-white font-bold">Loppusumma</span>
-          <span className="text-white text-2xl font-bold font-mono">{fmt(finalTotal)}</span>
+        {/* Grand total */}
+        <div className="flex items-center justify-between px-5 py-5 bg-primary-600 dark:bg-primary-700">
+          <span className="text-white font-bold text-base">Loppusumma (sis. marginaali)</span>
+          <span className="text-white font-bold text-2xl font-mono">{fmt(finalTotal)}</span>
         </div>
 
         {/* Hidden cost insight */}
-        <div className="mt-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 flex items-start gap-3">
-          <span className="text-amber-500 text-lg shrink-0">💡</span>
+        <div className="flex items-start gap-3 px-5 py-4 bg-amber-50 dark:bg-amber-900/10 border-t border-amber-100 dark:border-amber-800/30">
+          <AlertCircle size={16} className="text-amber-500 shrink-0 mt-0.5" />
           <div className="text-xs text-amber-800 dark:text-amber-300">
             <span className="font-semibold">Piilokustannukset {hiddenCostPct}% kokonaisbudjetista</span>
             <span className="block mt-0.5 text-amber-700 dark:text-amber-400">
-              Pelkät laitehinnat {fmt(equipmentTotal)} — todellinen kokonaiskustannus {fmt(grandTotal)}
+              Pelkät laitehinnat {fmt(equipmentTotal)} — todellinen kokonaiskustannus {fmt(grandTotal)} eli{' '}
+              {fmt(grandTotal - equipmentTotal)} enemmän kuin pelkät laitteet.
             </span>
           </div>
         </div>
-      </Card>
+      </div>
 
     </div>
   );
