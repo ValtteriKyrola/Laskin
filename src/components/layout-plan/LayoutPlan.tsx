@@ -280,7 +280,7 @@ export default function LayoutPlan() {
               </div>
             </Card>
           ) : (
-            <Card title="Legenda" accent>
+            <Card title="Laitteet" accent>
               <div className="space-y-1.5">
                 {activeLayout.machines.map(m => (
                   <div key={m.id} className="flex items-center gap-2 text-xs">
