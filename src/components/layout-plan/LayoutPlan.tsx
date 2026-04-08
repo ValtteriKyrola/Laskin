@@ -380,6 +380,7 @@ export default function LayoutPlan() {
               return (
                 <g key={machine.id}
                   onMouseDown={(e) => handleMouseDown(e, machine.id)}
+                  onClick={(e) => e.stopPropagation()}
                   style={{ cursor: dragging?.id === machine.id ? 'grabbing' : 'grab' }}
                 >
                   {/* Shadow */}
