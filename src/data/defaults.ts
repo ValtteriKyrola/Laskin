@@ -63,24 +63,8 @@ export const defaultLayout: LayoutOption = {
   id: 'layout-1',
   name: 'Layout A – FieldLab',
   createdAt: new Date().toISOString(),
-  machines: [
-    { id: 'm1', type: 'meltio',           name: 'Meltio Engine Robot', x: 60,  y: 60,  width: 140, height: 110, color: '#3B82F6', rotation: 0 },
-    { id: 'm2', type: 'abb-robot',        name: 'ABB IRB 2600',        x: 220, y: 70,  width: 100, height: 90,  color: '#6366F1', rotation: 0 },
-    { id: 'm3', type: 'machining-center', name: 'DNM 5700',            x: 380, y: 60,  width: 150, height: 110, color: '#10B981', rotation: 0 },
-    { id: 'm4', type: 'cobot',            name: 'UR10e Cobot',         x: 380, y: 220, width: 90,  height: 80,  color: '#8B5CF6', rotation: 0 },
-    { id: 'm5', type: 'fastems',          name: 'FASTEMS MMS',         x: 580, y: 60,  width: 170, height: 120, color: '#F59E0B', rotation: 0 },
-    { id: 'm6', type: 'amr',              name: 'MiR250 AMR',          x: 220, y: 220, width: 80,  height: 80,  color: '#EC4899', rotation: 0 },
-    { id: 'm7', type: 'measurement',      name: 'Mittausasema (CMM)',   x: 60,  y: 240, width: 110, height: 80,  color: '#06B6D4', rotation: 0 },
-    { id: 'm8', type: 'storage',          name: 'Varasto / puskuri',   x: 580, y: 240, width: 170, height: 100, color: '#6B7280', rotation: 0 },
-  ],
-  flows: [
-    { id: 'f1', from: 'm8', to: 'm1',  label: 'Aihio' },
-    { id: 'f2', from: 'm1', to: 'm3',  label: 'DED → koneistus' },
-    { id: 'f3', from: 'm3', to: 'm7',  label: 'Mittaus' },
-    { id: 'f4', from: 'm7', to: 'm8',  label: 'Valmis' },
-    { id: 'f5', from: 'm6', to: 'm1',  label: 'AMR kuljetus' },
-    { id: 'f6', from: 'm4', to: 'm3',  label: 'Cobot lastaus' },
-  ],
+  machines: [],
+  flows: [],
 };
 
 export const defaultFASTEMSTree: FASTEMSNode = {

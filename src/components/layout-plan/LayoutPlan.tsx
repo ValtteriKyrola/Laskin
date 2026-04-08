@@ -330,10 +330,22 @@ export default function LayoutPlan() {
             <rect width={CANVAS_W} height={CANVAS_H} fill="url(#lg)" />
             <rect width={CANVAS_W} height={CANVAS_H} fill="url(#lg-major)" />
 
-            {/* Room boundary */}
-            <rect x={10} y={10} width={CANVAS_W - 20} height={CANVAS_H - 20}
-              fill="none" stroke="#CBD5E1" strokeWidth="1.5" strokeDasharray="8,4" rx={2} opacity="0.6" />
-            <text x={20} y={28} fill="#94A3B8" fontSize="11" fontFamily="system-ui">FieldLab – tuotantosolu</text>
+            {/* ── Floor plan walls (pohjapiirrustus) ── */}
+            <g style={{ pointerEvents: 'none' }}>
+              {/* Outer room boundary */}
+              <rect x={4} y={4} width={CANVAS_W - 8} height={CANVAS_H - 8}
+                fill="none" stroke="#1E293B" strokeWidth={8} strokeLinejoin="miter" />
+              {/* Inner partition – left vertical (x=280, full height to shelf) */}
+              <line x1={280} y1={4} x2={280} y2={380}
+                stroke="#1E293B" strokeWidth={8} strokeLinecap="square" />
+              {/* Inner partition – horizontal shelf (y=380, x=280→520) */}
+              <line x1={280} y1={380} x2={520} y2={380}
+                stroke="#1E293B" strokeWidth={8} strokeLinecap="square" />
+              {/* Inner partition – right vertical (x=520, full height to shelf) */}
+              <line x1={520} y1={4} x2={520} y2={380}
+                stroke="#1E293B" strokeWidth={8} strokeLinecap="square" />
+            </g>
+            <text x={20} y={24} fill="#94A3B8" fontSize="11" fontFamily="system-ui">FieldLab – tuotantosolu</text>
 
             {/* Material flow lines */}
             {activeLayout.flows.map((flow) => {
