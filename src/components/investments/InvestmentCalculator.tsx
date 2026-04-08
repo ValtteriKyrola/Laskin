@@ -1,15 +1,10 @@
 import { useState } from 'react';
-import {
-  BarChart, Bar, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  Legend, ResponsiveContainer, ReferenceLine,
-} from 'recharts';
 import { useStore } from '../../store/useStore';
 import { calculateInvestment, formatCurrency, formatNumber } from '../../utils/calculations';
 import type { Investment } from '../../types';
 import { Card, Modal, Button, Badge, Slider, Input } from '../ui';
 import { PlusCircle, Edit2, Trash2 } from 'lucide-react';
 import { chartColors } from '../../styles/chartTheme';
-import { useTheme } from '../../hooks/useTheme';
 
 const emptyInvestment: Omit<Investment, 'id'> = {
   name: '',
@@ -22,19 +17,8 @@ const emptyInvestment: Omit<Investment, 'id'> = {
   color: '#7B2D8E',
 };
 
-const gridStroke = (dark: boolean) => dark ? '#343A40' : '#E9ECEF';
-const tickFill   = (dark: boolean) => dark ? '#ADB5BD' : '#6C757D';
-const tooltipStyle = (dark: boolean) => ({
-  background: dark ? '#212529' : '#fff',
-  border: `1px solid ${dark ? '#343A40' : '#DEE2E6'}`,
-  borderRadius: 8,
-  fontSize: 12,
-  color: dark ? '#F8F9FA' : '#212529',
-});
-
 export default function InvestmentCalculator() {
   const { investments, setInvestments, discountRate, setDiscountRate } = useStore();
-  const { isDark } = useTheme();
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Omit<Investment, 'id'>>(emptyInvestment);
   const [showForm, setShowForm] = useState(false);
@@ -53,15 +37,7 @@ export default function InvestmentCalculator() {
     ? calcs.reduce((b, c) => c.calc.npv > b.calc.npv ? c : b).inv.id
     : null;
 
-  const cashflowData = Array.from({ length: 11 }, (_, yr) => {
-    const d: Record<string, number | string> = { year: `v${yr}` };
-    calcs.forEach(({ inv, calc }) => {
-      d[inv.shortName] = yr === 0 ? -inv.cost : Math.round(-inv.cost + calc.annualNetCashFlow * yr);
-    });
-    return d;
-  });
-
-  const openEdit = (inv: Investment) => { setForm({ ...inv }); setEditId(inv.id); setShowForm(true); };
+const openEdit = (inv: Investment) => { setForm({ ...inv }); setEditId(inv.id); setShowForm(true); };
   const openNew  = () => { setForm({ ...emptyInvestment, color: chartColors[investments.length % chartColors.length] }); setEditId(null); setShowForm(true); };
 
   const saveForm = () => {
@@ -140,39 +116,6 @@ export default function InvestmentCalculator() {
         </div>
       </Card>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card title="NPV-vertailu (€)" accent>
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={calcs.map(({ inv, calc }) => ({ name: inv.shortName, NPV: Math.round(calc.npv), color: inv.color }))} margin={{ top: 15, right: 10, bottom: 5, left: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke(isDark)} />
-              <XAxis dataKey="name" tick={{ fill: tickFill(isDark), fontSize: 10 }} />
-              <YAxis tick={{ fill: tickFill(isDark), fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k€`} />
-              <Tooltip contentStyle={tooltipStyle(isDark)} formatter={(v: unknown) => [formatCurrency(v as number), 'NPV']} />
-              <ReferenceLine y={0} stroke={gridStroke(isDark)} />
-              <Bar dataKey="NPV" radius={[4, 4, 0, 0]}>
-                {calcs.map(({ inv }) => <Cell key={inv.id} fill={inv.color} />)}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-
-        <Card title="Kumulatiivinen kassavirta (€)" accent>
-          <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={cashflowData} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke(isDark)} />
-              <XAxis dataKey="year" tick={{ fill: tickFill(isDark), fontSize: 10 }} />
-              <YAxis tick={{ fill: tickFill(isDark), fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k€`} />
-              <Tooltip contentStyle={tooltipStyle(isDark)} formatter={(v: unknown) => formatCurrency(v as number)} />
-              <Legend wrapperStyle={{ fontSize: 10, color: tickFill(isDark) }} />
-              <ReferenceLine y={0} stroke={gridStroke(isDark)} strokeDasharray="4 2" />
-              {investments.map((inv) => (
-                <Line key={inv.id} type="monotone" dataKey={inv.shortName} stroke={inv.color} strokeWidth={2} dot={false} />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
 
       {/* Modal */}
       <Modal open={showForm} onClose={() => setShowForm(false)} title={editId ? 'Muokkaa investointia' : 'Lisää investointi'} size="lg">
