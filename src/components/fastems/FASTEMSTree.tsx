@@ -97,7 +97,7 @@ export default function FASTEMSTree() {
   const exportJSON = () => {
     const blob = new Blob([JSON.stringify(fastemTree, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'fastems-bom.json'; a.click(); URL.revokeObjectURL(url);
+    const a = document.createElement('a'); a.href = url; a.download = 'kiinnitin-bom.json'; a.click(); URL.revokeObjectURL(url);
   };
 
   const totalNodes = countNodes(fastemTree);
@@ -109,8 +109,8 @@ export default function FASTEMSTree() {
     <div className="p-4 lg:p-6 space-y-4 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">FASTEMS MMS – Tuoterakenne</h1>
-          <p className="text-neutral-500 dark:text-neutral-400 text-xs mt-0.5">Hierarkkinen tuoterakennepuu · Klikkaa ▶ avataksesi solmun</p>
+          <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">FASTEMS MMS – Räätälöidyt kiinnikkeet</h1>
+          <p className="text-neutral-500 dark:text-neutral-400 text-xs mt-0.5">Modulaarinen kiinnitinlevy KL-300 · Hierarkkinen tuoterakennepuu · Klikkaa ▶ avataksesi solmun</p>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" icon={<FileJson size={14} />} onClick={() => setShowJSON((v) => !v)}>JSON</Button>
