@@ -318,10 +318,10 @@ export default function LayoutPlan() {
             {/* Grid pattern */}
             <defs>
               <pattern id="lg" width={GRID} height={GRID} patternUnits="userSpaceOnUse">
-                <path d={`M ${GRID} 0 L 0 0 0 ${GRID}`} fill="none" stroke="#E9ECEF" strokeWidth="0.5" />
+                <path d={`M ${GRID} 0 L 0 0 0 ${GRID}`} fill="none" stroke="rgba(128,128,128,0.10)" strokeWidth="0.4" />
               </pattern>
               <pattern id="lg-major" width={GRID * 5} height={GRID * 5} patternUnits="userSpaceOnUse">
-                <path d={`M ${GRID * 5} 0 L 0 0 0 ${GRID * 5}`} fill="none" stroke="#DEE2E6" strokeWidth="1" />
+                <path d={`M ${GRID * 5} 0 L 0 0 0 ${GRID * 5}`} fill="none" stroke="rgba(128,128,128,0.18)" strokeWidth="0.7" />
               </pattern>
               <marker id="flow-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
                 <path d="M0,0 L0,6 L8,3 z" fill="#7B2D8E" opacity="0.85" />
@@ -335,14 +335,14 @@ export default function LayoutPlan() {
               {/* Outer room boundary */}
               <rect x={4} y={4} width={CANVAS_W - 8} height={CANVAS_H - 8}
                 fill="none" stroke="#1E293B" strokeWidth={8} strokeLinejoin="miter" />
-              {/* Inner partition – left vertical (x=280, full height to shelf) */}
-              <line x1={280} y1={4} x2={280} y2={380}
+              {/* Inner partition – left vertical: 6.0 m from left → x=200, from top wall down 7.5 m → y=240 */}
+              <line x1={200} y1={4} x2={200} y2={240}
                 stroke="#1E293B" strokeWidth={8} strokeLinecap="square" />
-              {/* Inner partition – horizontal shelf (y=380, x=280→520) */}
-              <line x1={280} y1={380} x2={520} y2={380}
+              {/* Inner partition – horizontal: y=240, 9.0 m right → x=200→480 */}
+              <line x1={200} y1={240} x2={480} y2={240}
                 stroke="#1E293B" strokeWidth={8} strokeLinecap="square" />
-              {/* Inner partition – right vertical (x=520, full height to shelf) */}
-              <line x1={520} y1={4} x2={520} y2={380}
+              {/* Inner partition – right vertical: x=480, from junction down 5.8 m → y=420 */}
+              <line x1={480} y1={240} x2={480} y2={420}
                 stroke="#1E293B" strokeWidth={8} strokeLinecap="square" />
             </g>
             <text x={20} y={24} fill="#94A3B8" fontSize="11" fontFamily="system-ui">FieldLab – tuotantosolu</text>
