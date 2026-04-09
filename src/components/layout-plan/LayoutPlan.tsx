@@ -35,7 +35,13 @@ export default function LayoutPlan() {
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dragging, setDragging] = useState<{ id: string; offsetX: number; offsetY: number } | null>(null);
+  const [resizing, setResizing] = useState<{
+    id: string; handle: string;
+    startSvgX: number; startSvgY: number;
+    startMachine: Machine;
+  } | null>(null);
   const dragPos = useRef<{ id: string; x: number; y: number } | null>(null);
+  const resizePos = useRef<{ id: string; x: number; y: number; width: number; height: number } | null>(null);
   const [showAddFlow, setShowAddFlow] = useState(false);
   const [flowFrom, setFlowFrom] = useState('');
   const [flowTo, setFlowTo] = useState('');
@@ -84,8 +90,10 @@ export default function LayoutPlan() {
 
   // Drag logic
   const [localMachines, setLocalMachines] = useState(activeLayout.machines);
-  useEffect(() => { if (!dragging) setLocalMachines(activeLayout.machines); }, [activeLayout.machines, dragging]);
-  const activeMachines = dragging ? localMachines : activeLayout.machines;
+  useEffect(() => {
+    if (!dragging && !resizing) setLocalMachines(activeLayout.machines);
+  }, [activeLayout.machines, dragging, resizing]);
+  const activeMachines = (dragging || resizing) ? localMachines : activeLayout.machines;
 
   const handleMouseDown = (e: React.MouseEvent<SVGGElement>, id: string) => {
     e.stopPropagation();
@@ -101,16 +109,42 @@ export default function LayoutPlan() {
     setDragging({ id, offsetX: svgX - machine.x, offsetY: svgY - machine.y });
   };
 
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!dragging) return;
+  const getSvgXY = (e: React.MouseEvent) => {
     const svgRect = svgRef.current?.getBoundingClientRect();
-    if (!svgRect) return;
-    const scaleX = CANVAS_W / svgRect.width;
-    const scaleY = CANVAS_H / svgRect.height;
-    const newX = snap(Math.max(0, (e.clientX - svgRect.left) * scaleX - dragging.offsetX));
-    const newY = snap(Math.max(0, (e.clientY - svgRect.top) * scaleY - dragging.offsetY));
-    dragPos.current = { id: dragging.id, x: newX, y: newY };
-    setLocalMachines(activeLayout.machines.map((m) => m.id === dragging.id ? { ...m, x: newX, y: newY } : m));
+    if (!svgRect) return null;
+    return {
+      x: (e.clientX - svgRect.left) * (CANVAS_W / svgRect.width),
+      y: (e.clientY - svgRect.top)  * (CANVAS_H / svgRect.height),
+    };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (!dragging && !resizing) return;
+    const pos = getSvgXY(e);
+    if (!pos) return;
+
+    if (dragging) {
+      const newX = snap(Math.max(0, pos.x - dragging.offsetX));
+      const newY = snap(Math.max(0, pos.y - dragging.offsetY));
+      dragPos.current = { id: dragging.id, x: newX, y: newY };
+      setLocalMachines(activeLayout.machines.map((m) => m.id === dragging.id ? { ...m, x: newX, y: newY } : m));
+    }
+
+    if (resizing) {
+      const { id, handle, startSvgX, startSvgY, startMachine: sm } = resizing;
+      const dx = pos.x - startSvgX;
+      const dy = pos.y - startSvgY;
+      const MIN = GRID * 2;
+      let x = sm.x, y = sm.y, w = sm.width, h = sm.height;
+
+      if (handle.includes('e')) w = Math.max(MIN, snap(sm.width + dx));
+      if (handle.includes('s')) h = Math.max(MIN, snap(sm.height + dy));
+      if (handle.includes('w')) { w = Math.max(MIN, snap(sm.width - dx)); x = sm.x + sm.width - w; }
+      if (handle.includes('n')) { h = Math.max(MIN, snap(sm.height - dy)); y = sm.y + sm.height - h; }
+
+      resizePos.current = { id, x, y, width: w, height: h };
+      setLocalMachines(activeLayout.machines.map((m) => m.id === id ? { ...m, x, y, width: w, height: h } : m));
+    }
   };
 
   const handleMouseUp = () => {
@@ -119,7 +153,23 @@ export default function LayoutPlan() {
       updateLayout({ ...activeLayout, machines: activeLayout.machines.map((m) => m.id === id ? { ...m, x, y } : m) });
       dragPos.current = null;
     }
+    if (resizing && resizePos.current) {
+      const { id, x, y, width, height } = resizePos.current;
+      updateLayout({ ...activeLayout, machines: activeLayout.machines.map((m) => m.id === id ? { ...m, x, y, width, height } : m) });
+      resizePos.current = null;
+    }
     setDragging(null);
+    setResizing(null);
+  };
+
+  const handleResizeStart = (e: React.MouseEvent<SVGRectElement>, id: string, handle: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const pos = getSvgXY(e);
+    if (!pos) return;
+    const machine = activeLayout.machines.find((m) => m.id === id);
+    if (!machine) return;
+    setResizing({ id, handle, startSvgX: pos.x, startSvgY: pos.y, startMachine: machine });
   };
 
   const exportSVG = () => {
@@ -302,7 +352,7 @@ export default function LayoutPlan() {
       <div className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 dark:border-neutral-700">
           <span className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">Pohjapiirros</span>
-          <span className="text-xs text-neutral-400">Grid {GRID} px · {CANVAS_W}×{CANVAS_H} · raahaa koneita</span>
+          <span className="text-xs text-neutral-400">Grid {GRID} px · {CANVAS_W}×{CANVAS_H} · raahaa tai muuta kokoa</span>
         </div>
         <div className="overflow-auto p-2">
           <svg
@@ -419,13 +469,36 @@ export default function LayoutPlan() {
                     fill="#64748B" fontSize="8" textAnchor="middle" fontFamily="system-ui">
                     {machine.width}×{machine.height} px
                   </text>
-                  {/* Selection ring */}
-                  {isSelected && (
-                    <rect x={machine.x - 3} y={machine.y - 3}
-                      width={machine.width + 6} height={machine.height + 6}
-                      fill="none" stroke="#7B2D8E" strokeWidth="1.5"
-                      strokeDasharray="4,3" rx={8} opacity="0.7" />
-                  )}
+                  {/* Selection ring + resize handles */}
+                  {isSelected && (() => {
+                    const { x: mx, y: my, width: mw, height: mh } = machine;
+                    const HS = 9; // handle half-size
+                    const handles = [
+                      { h: 'nw', hx: mx,        hy: my,        cursor: 'nw-resize' },
+                      { h: 'n',  hx: mx+mw/2,   hy: my,        cursor: 'n-resize'  },
+                      { h: 'ne', hx: mx+mw,      hy: my,        cursor: 'ne-resize' },
+                      { h: 'e',  hx: mx+mw,      hy: my+mh/2,   cursor: 'e-resize'  },
+                      { h: 'se', hx: mx+mw,      hy: my+mh,     cursor: 'se-resize' },
+                      { h: 's',  hx: mx+mw/2,   hy: my+mh,     cursor: 's-resize'  },
+                      { h: 'sw', hx: mx,        hy: my+mh,     cursor: 'sw-resize' },
+                      { h: 'w',  hx: mx,        hy: my+mh/2,   cursor: 'w-resize'  },
+                    ];
+                    return (
+                      <>
+                        <rect x={mx-3} y={my-3} width={mw+6} height={mh+6}
+                          fill="none" stroke="#7B2D8E" strokeWidth="1.5"
+                          strokeDasharray="4,3" rx={8} opacity="0.7" />
+                        {handles.map(({ h, hx, hy, cursor }) => (
+                          <rect key={h}
+                            x={hx - HS} y={hy - HS} width={HS*2} height={HS*2}
+                            fill="white" stroke="#7B2D8E" strokeWidth="1.5" rx={2}
+                            style={{ cursor }}
+                            onMouseDown={(e) => handleResizeStart(e, machine.id, h)}
+                          />
+                        ))}
+                      </>
+                    );
+                  })()}
                 </g>
               );
             })}
