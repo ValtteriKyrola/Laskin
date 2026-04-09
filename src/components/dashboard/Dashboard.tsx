@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useStore } from '../../store/useStore';
 import { Card, KPICard, Badge } from '../ui';
 import { motion } from 'framer-motion';
@@ -13,17 +12,18 @@ const stagger = {
 };
 
 // Read live budget total from localStorage (written by InvestmentCalculator)
+function readBudgetData() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('fieldlab-budget-v1') || 'null');
+    if (!saved?.machines) return { total: 378100, margin: 15 };
+    const total = (saved.machines as {groups:{rows:{enabled:boolean;amount:number}[]}[]}[]).reduce(
+      (s, m) => s + m.groups.reduce(
+        (gs, g) => gs + g.rows.filter(r => r.enabled).reduce((rs, r) => rs + r.amount, 0), 0), 0);
+    return { total, margin: saved.marginPct ?? 15 };
+  } catch { return { total: 378100, margin: 15 }; }
+}
 function useBudgetData() {
-  return useMemo(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('fieldlab-budget-v1') || 'null');
-      if (!saved?.machines) return { total: 378100, margin: 15 };
-      const total = (saved.machines as {groups:{rows:{enabled:boolean;amount:number}[]}[]}[]).reduce(
-        (s, m) => s + m.groups.reduce(
-          (gs, g) => gs + g.rows.filter(r => r.enabled).reduce((rs, r) => rs + r.amount, 0), 0), 0);
-      return { total, margin: saved.marginPct ?? 15 };
-    } catch { return { total: 378100, margin: 15 }; }
-  }, []);
+  return readBudgetData();
 }
 
 // Machines in the FieldLab cell

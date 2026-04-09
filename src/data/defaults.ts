@@ -241,10 +241,10 @@ export const defaultFASTEMSTree: FASTEMSNode = {
 };
 
 export const sensorDataTable: SensorData[] = [
-  { machine: 'Meltio M600', parameter: 'Laserin teho (W)', frequency: '100 Hz', purpose: 'Prosessin laadunvalvonta', unit: 'W' },
-  { machine: 'Meltio M600', parameter: 'Sulatusaltaan lämpötila', frequency: '10 Hz', purpose: 'Materiaalin sulaminen', unit: '°C' },
-  { machine: 'Meltio M600', parameter: 'Langansyöttönopeus', frequency: '10 Hz', purpose: 'Kerrostusnopeus', unit: 'mm/min' },
-  { machine: 'Meltio M600', parameter: 'Suojakaasun virtaus', frequency: '1 Hz', purpose: 'Hapetuksen esto', unit: 'l/min' },
+  { machine: 'Meltio Engine Robot', parameter: 'Laserin teho (W)', frequency: '100 Hz', purpose: 'Prosessin laadunvalvonta', unit: 'W' },
+  { machine: 'Meltio Engine Robot', parameter: 'Sulatusaltaan lämpötila', frequency: '10 Hz', purpose: 'Materiaalin sulaminen', unit: '°C' },
+  { machine: 'Meltio Engine Robot', parameter: 'Langansyöttönopeus', frequency: '10 Hz', purpose: 'Kerrostusnopeus', unit: 'mm/min' },
+  { machine: 'Meltio Engine Robot', parameter: 'Suojakaasun virtaus', frequency: '1 Hz', purpose: 'Hapetuksen esto', unit: 'l/min' },
   { machine: 'DNM 5700', parameter: 'Karan kierrosnopeus', frequency: '100 Hz', purpose: 'Työkalun seuranta', unit: 'RPM' },
   { machine: 'DNM 5700', parameter: 'Leikkausvoimat (Fx,Fy,Fz)', frequency: '1 kHz', purpose: 'Työkalun kuluminen', unit: 'N' },
   { machine: 'DNM 5700', parameter: 'Servomoottorin virta', frequency: '100 Hz', purpose: 'Kuormituksen seuranta', unit: 'A' },

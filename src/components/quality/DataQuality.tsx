@@ -33,7 +33,7 @@ function getCenter(id: string) {
 }
 
 const qualitySteps = [
-  { step: '1', label: 'DED-tulostus',         desc: 'Meltio M600 prosessin seuranta: laserteho, lämpötila, langansyöttö' },
+  { step: '1', label: 'DED-tulostus',         desc: 'Meltio Engine Robot prosessin seuranta: laserteho, lämpötila, langansyöttö' },
   { step: '2', label: 'Jäähtyminen',           desc: 'Jäähtymisnopeuden ohjaus, hapetuksen esto suojakaasulla' },
   { step: '3', label: 'Visuaalinen tarkastus', desc: 'Kamerajärjestelmä pinnan laadun tarkastukseen' },
   { step: '4', label: 'CMM-mittaus',           desc: 'Koordinaattimittaus: geometria, toleranssit ±0.1mm' },

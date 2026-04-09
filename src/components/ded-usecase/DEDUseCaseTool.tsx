@@ -9,7 +9,7 @@ import { useTheme } from '../../hooks/useTheme';
 
 const presets: { label: string; input: DEDInput }[] = [
   { label: 'Turbiinin siipi (Inconel625)', input: { material: 'Inconel625', geometry: 'complex', sizeX: 300, sizeY: 80, sizeZ: 200, weight: 3.2, annualVolume: 8, currentProcess: 'forging', buyToFly: 6.5 } },
-  { label: 'Hydraulilohko (316L)', input: { material: '316L', geometry: 'complex', sizeX: 200, sizeY: 150, sizeZ: 100, weight: 2.5, annualVolume: 20, currentProcess: 'machining', buyToFly: 4.5 } },
+  { label: 'KL-300 kiinnitinlevy (316L)', input: { material: '316L', geometry: 'complex', sizeX: 300, sizeY: 200, sizeZ: 60, weight: 8.5, annualVolume: 4, currentProcess: 'machining', buyToFly: 3.8 } },
   { label: 'Kulumissuoja (Stellite6)', input: { material: 'Stellite6', geometry: 'rotationally-symmetric', sizeX: 120, sizeY: 120, sizeZ: 60, weight: 1.8, annualVolume: 30, currentProcess: 'welding', buyToFly: 2.0 } },
   { label: 'Korjaustuloste (Ti6Al4V)', input: { material: 'Ti6Al4V', geometry: 'complex', sizeX: 150, sizeY: 100, sizeZ: 80, weight: 0.9, annualVolume: 5, currentProcess: 'machining', buyToFly: 8.0 } },
 ];
@@ -215,9 +215,7 @@ export default function DEDUseCaseTool() {
                       <XAxis dataKey="name" tick={{ fill: tickFill(isDark), fontSize: 11 }} />
                       <YAxis tick={{ fill: tickFill(isDark), fontSize: 10 }} tickFormatter={(v) => `${v}€`} />
                       <Tooltip contentStyle={tooltipStyle(isDark)} formatter={(v: unknown) => [`${formatCurrency(v as number)}/kpl`, 'Kustannus']} />
-                      <Bar dataKey="kustannus" radius={[4, 4, 0, 0]}>
-                        <Bar dataKey="kustannus" fill="#7B2D8E" />
-                      </Bar>
+                      <Bar dataKey="kustannus" fill="#7B2D8E" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                   <p className={`text-center text-xs font-semibold mt-2 ${result.annualSaving > 0 ? 'text-success' : 'text-danger'}`}>
