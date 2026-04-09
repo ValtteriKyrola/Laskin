@@ -468,7 +468,6 @@ export default function LayoutPlan() {
             {activeMachines.map((machine) => {
               const isSelected = machine.id === selectedId;
               const cx = machine.x + machine.width / 2;
-              const cy = machine.y + machine.height / 2;
               return (
                 <g key={machine.id}
                   onMouseDown={(e) => handleMouseDown(e, machine.id)}
@@ -478,36 +477,37 @@ export default function LayoutPlan() {
                   {/* Shadow */}
                   <rect x={machine.x + 3} y={machine.y + 3}
                     width={machine.width} height={machine.height}
-                    rx={6} fill="black" opacity="0.06" />
+                    rx={6} fill="black" opacity="0.10" />
                   {/* Body */}
                   <rect x={machine.x} y={machine.y}
                     width={machine.width} height={machine.height}
-                    fill={machine.color} fillOpacity={isSelected ? 0.22 : 0.12}
-                    stroke={machine.color}
-                    strokeWidth={isSelected ? 2.5 : 1.5}
-                    rx={6}
-                    strokeDasharray={isSelected ? undefined : undefined}
-                  />
-                  {/* Color header bar */}
-                  <rect x={machine.x} y={machine.y}
-                    width={machine.width} height={8}
-                    fill={machine.color} fillOpacity={isSelected ? 0.7 : 0.5}
+                    fill={machine.color} fillOpacity={isSelected ? 0.20 : 0.10}
+                    stroke={machine.color} strokeWidth={isSelected ? 2.5 : 1.5}
                     rx={6} />
-                  <rect x={machine.x} y={machine.y + 4}
-                    width={machine.width} height={4}
-                    fill={machine.color} fillOpacity={isSelected ? 0.7 : 0.5} />
-                  {/* Name */}
-                  <text x={cx} y={cy - 2}
-                    fill={machine.color} fontSize="10.5" textAnchor="middle"
-                    fontWeight="700" fontFamily="system-ui"
-                    style={{ filter: 'drop-shadow(0 0 2px white)' }}>
+                  {/* Solid color header strip for name */}
+                  <rect x={machine.x} y={machine.y}
+                    width={machine.width} height={24}
+                    fill={machine.color} fillOpacity={isSelected ? 1 : 0.88}
+                    rx={6} />
+                  {/* Square off the bottom corners of the header */}
+                  <rect x={machine.x} y={machine.y + 18}
+                    width={machine.width} height={6}
+                    fill={machine.color} fillOpacity={isSelected ? 1 : 0.88} />
+                  {/* Name – white on solid header */}
+                  <text x={cx} y={machine.y + 15.5}
+                    fill="white" fontSize="11" textAnchor="middle"
+                    fontWeight="700" fontFamily="system-ui, sans-serif"
+                    style={{ userSelect: 'none' }}>
                     {machine.name}
                   </text>
-                  {/* Dimensions */}
-                  <text x={cx} y={cy + 13}
-                    fill="#64748B" fontSize="8" textAnchor="middle" fontFamily="system-ui">
-                    {machine.width}×{machine.height} px
-                  </text>
+                  {/* Dims – only if enough vertical space */}
+                  {machine.height > 48 && (
+                    <text x={cx} y={machine.y + machine.height - 7}
+                      fill={machine.color} fontSize="8" textAnchor="middle"
+                      fontFamily="system-ui" opacity="0.65">
+                      {machine.width}×{machine.height}
+                    </text>
+                  )}
                   {/* Selection ring + resize handles */}
                   {isSelected && (() => {
                     const { x: mx, y: my, width: mw, height: mh } = machine;
