@@ -39,6 +39,8 @@ export interface MaterialFlow {
   from: string;
   to: string;
   label?: string;
+  labelX?: number;
+  labelY?: number;
 }
 
 export interface LayoutOption {

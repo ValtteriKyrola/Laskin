@@ -40,8 +40,10 @@ export default function LayoutPlan() {
     startSvgX: number; startSvgY: number;
     startMachine: Machine;
   } | null>(null);
+  const [draggingLabel, setDraggingLabel] = useState<{ flowId: string; offsetX: number; offsetY: number } | null>(null);
   const dragPos = useRef<{ id: string; x: number; y: number } | null>(null);
   const resizePos = useRef<{ id: string; x: number; y: number; width: number; height: number } | null>(null);
+  const labelPos = useRef<{ flowId: string; x: number; y: number } | null>(null);
   const [showAddFlow, setShowAddFlow] = useState(false);
   const [flowFrom, setFlowFrom] = useState('');
   const [flowTo, setFlowTo] = useState('');
@@ -93,6 +95,16 @@ export default function LayoutPlan() {
   useEffect(() => {
     if (!dragging && !resizing) setLocalMachines(activeLayout.machines);
   }, [activeLayout.machines, dragging, resizing]);
+
+  const handleLabelMouseDown = (e: React.MouseEvent<SVGGElement>, flow: MaterialFlow, mx: number, my: number) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const pos = getSvgXY(e);
+    if (!pos) return;
+    const lx = flow.labelX ?? mx;
+    const ly = flow.labelY ?? my;
+    setDraggingLabel({ flowId: flow.id, offsetX: pos.x - lx, offsetY: pos.y - ly });
+  };
   const activeMachines = (dragging || resizing) ? localMachines : activeLayout.machines;
 
   const handleMouseDown = (e: React.MouseEvent<SVGGElement>, id: string) => {
@@ -119,7 +131,7 @@ export default function LayoutPlan() {
   };
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!dragging && !resizing) return;
+    if (!dragging && !resizing && !draggingLabel) return;
     const pos = getSvgXY(e);
     if (!pos) return;
 
@@ -145,6 +157,12 @@ export default function LayoutPlan() {
       resizePos.current = { id, x, y, width: w, height: h };
       setLocalMachines(activeLayout.machines.map((m) => m.id === id ? { ...m, x, y, width: w, height: h } : m));
     }
+
+    if (draggingLabel) {
+      const lx = pos.x - draggingLabel.offsetX;
+      const ly = pos.y - draggingLabel.offsetY;
+      labelPos.current = { flowId: draggingLabel.flowId, x: lx, y: ly };
+    }
   };
 
   const handleMouseUp = () => {
@@ -158,8 +176,14 @@ export default function LayoutPlan() {
       updateLayout({ ...activeLayout, machines: activeLayout.machines.map((m) => m.id === id ? { ...m, x, y, width, height } : m) });
       resizePos.current = null;
     }
+    if (draggingLabel && labelPos.current) {
+      const { flowId, x, y } = labelPos.current;
+      updateLayout({ ...activeLayout, flows: activeLayout.flows.map((f) => f.id === flowId ? { ...f, labelX: x, labelY: y } : f) });
+      labelPos.current = null;
+    }
     setDragging(null);
     setResizing(null);
+    setDraggingLabel(null);
   };
 
   const handleResizeStart = (e: React.MouseEvent<SVGRectElement>, id: string, handle: string) => {
@@ -402,22 +426,37 @@ export default function LayoutPlan() {
 
             {/* Material flow lines */}
             {activeLayout.flows.map((flow) => {
-              const fromM = activeLayout.machines.find((m) => m.id === flow.from);
-              const toM = activeLayout.machines.find((m) => m.id === flow.to);
+              const fromM = activeMachines.find((m) => m.id === flow.from);
+              const toM = activeMachines.find((m) => m.id === flow.to);
               if (!fromM || !toM) return null;
               const from = getMachineCenter(fromM);
               const to = getMachineCenter(toM);
               const mx = (from.x + to.x) / 2;
               const my = (from.y + to.y) / 2;
+              // Label position: stored or default to midpoint
+              const isDraggingThis = draggingLabel?.flowId === flow.id;
+              const lx = isDraggingThis && labelPos.current ? labelPos.current.x : (flow.labelX ?? mx);
+              const ly = isDraggingThis && labelPos.current ? labelPos.current.y : (flow.labelY ?? my);
+              // Dynamic background width: ~5px per char + 16px padding
+              const labelW = flow.label ? Math.max(40, flow.label.length * 4.8 + 16) : 0;
               return (
                 <g key={flow.id}>
                   <line x1={from.x} y1={from.y} x2={to.x} y2={to.y}
                     stroke="#7B2D8E" strokeWidth="1.5" strokeDasharray="6,3"
                     opacity="0.65" markerEnd="url(#flow-arrow)" />
                   {flow.label && (
-                    <g>
-                      <rect x={mx - 28} y={my - 9} width={56} height={14} rx={3} fill="white" fillOpacity="0.85" />
-                      <text x={mx} y={my + 2} fill="#7B2D8E" fontSize="8.5" textAnchor="middle"
+                    <g
+                      style={{ cursor: isDraggingThis ? 'grabbing' : 'grab' }}
+                      onMouseDown={(e) => handleLabelMouseDown(e, flow, mx, my)}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <rect
+                        x={lx - labelW / 2 - 1} y={ly - 9}
+                        width={labelW + 2} height={16}
+                        rx={3} fill="white" fillOpacity="0.92"
+                        stroke="#E9D5F5" strokeWidth="0.75"
+                      />
+                      <text x={lx} y={ly + 3} fill="#7B2D8E" fontSize="8.5" textAnchor="middle"
                         fontWeight="600" fontFamily="system-ui">{flow.label}</text>
                     </g>
                   )}
