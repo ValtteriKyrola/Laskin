@@ -3,21 +3,8 @@ import { supabase } from '../lib/supabase';
 import { useStore } from '../store/useStore';
 import { defaultInvestments, defaultLayout, defaultFASTEMSTree } from '../data/defaults';
 
-const ADJECTIVES = ['Nopea', 'Rohkea', 'Tarkka', 'Vahva', 'Ketterä', 'Viisas', 'Luova'];
-const NOUNS = ['Insinööri', 'Suunnittelija', 'Analyytikko', 'Kehittäjä', 'Asiantuntija'];
-
-function randomName() {
-  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
-  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
-  return `${adj} ${noun}`;
-}
-
-function getOrCreateUserName(): string {
-  const stored = localStorage.getItem('fieldlab-username');
-  if (stored) return stored;
-  const name = randomName();
-  localStorage.setItem('fieldlab-username', name);
-  return name;
+function getStoredUserName(): string {
+  return localStorage.getItem('fieldlab-username') ?? '';
 }
 
 // Skip Supabase if credentials are not configured
@@ -29,8 +16,8 @@ export function useSession() {
   const { sessionId, setSessionId, userName, setUserName, setInvestments, setLayouts, setFASTEMTree, addToast } = useStore();
 
   useEffect(() => {
-    const name = getOrCreateUserName();
-    if (!userName) setUserName(name);
+    const name = getStoredUserName();
+    if (!userName && name) setUserName(name);
 
     // If Supabase is not configured, work with localStorage only — no error shown
     if (!supabaseConfigured) return;
@@ -81,7 +68,7 @@ export function useSession() {
     const sid = data.id;
     setSessionId(sid);
 
-    const userName = getOrCreateUserName();
+    const userName = getStoredUserName();
     await Promise.all([
       supabase.from('investments').insert({ session_id: sid, data: defaultInvestments, updated_by: userName }),
       supabase.from('layouts').insert({ session_id: sid, data: [defaultLayout], updated_by: userName }),

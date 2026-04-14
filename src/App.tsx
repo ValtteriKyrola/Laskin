@@ -1,8 +1,9 @@
 import './index.css';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Sidebar from './components/layout/Sidebar';
 import TopBar from './components/layout/TopBar';
 import BottomTabBar from './components/layout/BottomTabBar';
+import NameModal from './components/layout/NameModal';
 import ToastProvider from './components/shared/ToastProvider';
 import { useStore } from './store/useStore';
 import { useSession } from './hooks/useSession';
@@ -30,6 +31,9 @@ function AppInner() {
   usePresence();
 
   const { activeTab, isDark } = useStore();
+  const [showNameModal, setShowNameModal] = useState(
+    () => !localStorage.getItem('fieldlab-username')
+  );
 
   // Apply dark class on body on mount
   useEffect(() => {
@@ -41,6 +45,7 @@ function AppInner() {
 
   return (
     <div className="flex min-h-screen bg-neutral-100 dark:bg-neutral-950">
+      {showNameModal && <NameModal onDone={() => setShowNameModal(false)} />}
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar />
