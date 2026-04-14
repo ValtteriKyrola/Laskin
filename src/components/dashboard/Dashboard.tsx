@@ -1,10 +1,41 @@
 import { useStore } from '../../store/useStore';
 import { Card, KPICard, Badge } from '../ui';
 import { motion } from 'framer-motion';
+import type { FASTEMSNode } from '../../types';
 import {
-  Wallet, Factory, Clock, TrendingUp,
-  Wrench, Bot, Cpu, GitBranch, BarChart3, Package,
+  Wallet, Factory, TrendingUp,
+  Wrench, Bot, Cpu, GitBranch, BarChart3, Package, Euro,
 } from 'lucide-react';
+
+// Laske operaatioajat koneittain FASTEMS-puusta
+function machineMinutes(node: FASTEMSNode): Record<string, number> {
+  const result: Record<string, number> = {};
+  function traverse(n: FASTEMSNode) {
+    if (n.children.length === 0 && n.manufacturingTime > 0 && n.machine) {
+      result[n.machine] = (result[n.machine] || 0) + n.manufacturingTime;
+    }
+    n.children.forEach(traverse);
+  }
+  traverse(node);
+  return result;
+}
+
+const MACHINE_RATES: Record<string, number> = {
+  'DNM 5700': 80,
+  'Meltio Engine Robot': 120,
+  'Mittausasema': 60,
+};
+
+const MATERIAL_COST = 30.70; // S355 aihio + 316L lanka + standardiosat
+
+function calcCostPerPart(node: FASTEMSNode): number {
+  const mins = machineMinutes(node);
+  const machineCost = Object.entries(mins).reduce((s, [machine, min]) => {
+    const rate = Object.entries(MACHINE_RATES).find(([k]) => machine.includes(k))?.[1] ?? 0;
+    return s + (min / 60) * rate;
+  }, 0);
+  return Math.round(machineCost + MATERIAL_COST);
+}
 
 const stagger = {
   container: { animate: { transition: { staggerChildren: 0.07 } } },
@@ -14,7 +45,7 @@ const stagger = {
 // Read live budget total from localStorage (written by InvestmentCalculator)
 function readBudgetData() {
   try {
-    const saved = JSON.parse(localStorage.getItem('fieldlab-budget-v1') || 'null');
+    const saved = JSON.parse(localStorage.getItem('fieldlab-budget-v2') || 'null');
     if (!saved?.machines) return { total: 378100, margin: 15 };
     const total = (saved.machines as {groups:{rows:{enabled:boolean;amount:number}[]}[]}[]).reduce(
       (s, m) => s + m.groups.reduce(
@@ -38,10 +69,15 @@ const MACHINES = [
 ];
 
 export default function Dashboard() {
-  const { setActiveTab } = useStore();
+  const { setActiveTab, fastemTree } = useStore();
   const { total, margin } = useBudgetData();
   const withMargin = Math.round(total * (1 + margin / 100));
   const fmt = (n: number) => n.toLocaleString('fi-FI', { maximumFractionDigits: 0 }) + ' €';
+
+  const cycleTime = 35 + 103 + 12; // asetus + työ + kuljetukset
+  const partsPerDay = Math.floor(480 / cycleTime);
+  const partsPerWeek = partsPerDay * 5;
+  const costPerPart = calcCostPerPart(fastemTree);
 
   const kpis = [
     {
@@ -63,20 +99,20 @@ export default function Dashboard() {
       delay: 0.07,
     },
     {
-      label: 'Läpimenoaika / kappale',
-      value: '~160 min',
-      sub: '35 min asetus + 113 min työ + kuljetukset',
+      label: 'Kapasiteetti (1 vuoro, 8 h/pv)',
+      value: `~${partsPerDay} kpl/pv`,
+      sub: `~${partsPerWeek} kpl/vko · läpimeno ${cycleTime} min`,
       color: 'text-success',
-      icon: <Clock size={20} />,
+      icon: <TrendingUp size={20} />,
       tab: 'fastems',
       delay: 0.14,
     },
     {
-      label: 'Kapasiteetti (8 h/pv)',
-      value: '~3 kpl/pv',
-      sub: 'Modulaarinen kiinnitinlevy KL-300',
+      label: 'Kappalekustannus (KL-300)',
+      value: `~${costPerPart} €`,
+      sub: 'Konekustannus + materiaalit + standardiosat',
       color: 'text-warning',
-      icon: <TrendingUp size={20} />,
+      icon: <Euro size={20} />,
       tab: 'fastems',
       delay: 0.21,
     },
