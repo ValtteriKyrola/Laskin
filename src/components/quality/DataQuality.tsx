@@ -1,12 +1,5 @@
-import { useMemo } from 'react';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
-  ResponsiveContainer,
-} from 'recharts';
-import { Card, Badge } from '../ui';
+import { Card } from '../ui';
 import { sensorDataTable } from '../../data/defaults';
-import { generateSPCData } from '../../utils/calculations';
-import { useTheme } from '../../hooks/useTheme';
 
 const archNodes = [
   { id: 'sensors',   label: 'Anturit & laitteet', sublabel: 'Meltio, DNM 5700, AMR, mittaus',   x: 30,  y: 100, w: 140, h: 50, color: '#3B82F6' },
@@ -43,20 +36,8 @@ const qualitySteps = [
   { step: '8', label: 'Hyväksyntä / arkistointi', desc: 'Mittauspöytäkirja Odoo Quality → jäljitettävyys' },
 ];
 
-const gridStroke = (dark: boolean) => dark ? '#343A40' : '#E9ECEF';
-const tickFill   = (dark: boolean) => dark ? '#ADB5BD' : '#6C757D';
-const tooltipStyle = (dark: boolean) => ({
-  background: dark ? '#212529' : '#fff',
-  border: `1px solid ${dark ? '#343A40' : '#DEE2E6'}`,
-  borderRadius: 8, fontSize: 11,
-  color: dark ? '#F8F9FA' : '#212529',
-});
 
 export default function DataQuality() {
-  const { isDark } = useTheme();
-  const spcData = useMemo(() => generateSPCData(25), []);
-  const outOfControlX = spcData.xbar.filter((p) => p.value > p.ucl || p.value < p.lcl);
-  const outOfControlR = spcData.rChart.filter((p) => p.value > p.ucl);
   const machines = Array.from(new Set(sensorDataTable.map((s) => s.machine)));
 
   return (
@@ -160,72 +141,7 @@ export default function DataQuality() {
         </div>
       </Card>
 
-      {/* SPC Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card accent title={`X-bar -kortti${outOfControlX.length > 0 ? ` (${outOfControlX.length} yli rajojen)` : ' – hallinnassa'}`}>
-          {outOfControlX.length > 0 && (
-            <div className="mb-2 flex items-center gap-1.5">
-              <Badge variant="danger">⚠ {outOfControlX.length} havainto UCL/LCL-rajojen ulkopuolella</Badge>
-            </div>
-          )}
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={spcData.xbar} margin={{ top: 5, right: 10, bottom: 5, left: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke(isDark)} />
-              <XAxis dataKey="sample" tick={{ fill: tickFill(isDark), fontSize: 9 }} />
-              <YAxis tick={{ fill: tickFill(isDark), fontSize: 9 }} domain={['auto', 'auto']} tickFormatter={(v) => v.toFixed(3)} />
-              <Tooltip contentStyle={tooltipStyle(isDark)} formatter={(v: unknown) => [(v as number).toFixed(4) + ' mm', '']} />
-              <ReferenceLine y={spcData.xbar[0]?.ucl} stroke="#EF4444" strokeDasharray="4,2" label={{ value: 'UCL', fill: '#EF4444', fontSize: 9 }} />
-              <ReferenceLine y={spcData.xbar[0]?.lcl} stroke="#EF4444" strokeDasharray="4,2" label={{ value: 'LCL', fill: '#EF4444', fontSize: 9 }} />
-              <ReferenceLine y={spcData.xbar[0]?.cl} stroke="#10B981" strokeDasharray="4,2" label={{ value: 'CL', fill: '#10B981', fontSize: 9 }} />
-              <Line type="monotone" dataKey="value" stroke="#7B2D8E" strokeWidth={1.5} dot={(props) => {
-                const { cx, cy, payload } = props;
-                const oc = payload.value > payload.ucl || payload.value < payload.lcl;
-                return <circle key={`x-${payload.sample}`} cx={cx} cy={cy} r={oc ? 4 : 2} fill={oc ? '#EF4444' : '#7B2D8E'} />;
-              }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-
-        <Card accent title={`R-kortti${outOfControlR.length > 0 ? ` (${outOfControlR.length} yli UCL)` : ' – hallinnassa'}`}>
-          {outOfControlR.length > 0 && (
-            <div className="mb-2 flex items-center gap-1.5">
-              <Badge variant="danger">⚠ Vaihtelevuus kasvanut</Badge>
-            </div>
-          )}
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={spcData.rChart} margin={{ top: 5, right: 10, bottom: 5, left: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke(isDark)} />
-              <XAxis dataKey="sample" tick={{ fill: tickFill(isDark), fontSize: 9 }} />
-              <YAxis tick={{ fill: tickFill(isDark), fontSize: 9 }} domain={[0, 'auto']} tickFormatter={(v) => v.toFixed(3)} />
-              <Tooltip contentStyle={tooltipStyle(isDark)} formatter={(v: unknown) => [(v as number).toFixed(4) + ' mm', '']} />
-              <ReferenceLine y={spcData.rChart[0]?.ucl} stroke="#EF4444" strokeDasharray="4,2" label={{ value: 'UCL', fill: '#EF4444', fontSize: 9 }} />
-              <ReferenceLine y={spcData.rChart[0]?.cl} stroke="#10B981" strokeDasharray="4,2" label={{ value: 'R̄', fill: '#10B981', fontSize: 9 }} />
-              <Line type="monotone" dataKey="value" stroke="#7B2D8E" strokeWidth={1.5} dot={(props) => {
-                const { cx, cy, payload } = props;
-                const oc = payload.value > payload.ucl;
-                return <circle key={`r-${payload.sample}`} cx={cx} cy={cy} r={oc ? 4 : 2} fill={oc ? '#EF4444' : '#7B2D8E'} />;
-              }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
-
-      {/* SPC params */}
-      <Card title="SPC-parametrit (simuloitu: DNM 5700, reikähalkaisija ⌀100.000 mm)" accent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-          {[
-            { label: 'Kohdemitto', value: '100.000 mm', color: 'text-neutral-900 dark:text-neutral-100' },
-            { label: 'Prosessistandardi σ', value: '0.020 mm', color: 'text-info' },
-            { label: 'Alaryhmäkoko n', value: '5', color: 'text-success' },
-            { label: 'Näytteitä', value: '25', color: 'text-primary-500' },
-          ].map((s) => (
-            <div key={s.label} className="bg-neutral-100 dark:bg-neutral-900 rounded-xl p-3">
-              <div className={`text-lg font-bold font-mono ${s.color}`}>{s.value}</div>
-              <div className="text-xs text-neutral-500 mt-0.5">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </Card>
+      {/* SPC Charts removed */}
     </div>
   );
 }
