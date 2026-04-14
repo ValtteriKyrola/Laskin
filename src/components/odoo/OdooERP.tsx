@@ -135,7 +135,7 @@ export default function OdooERP() {
       {/* Integration diagram */}
       <Card title="Integraatioarkkitehtuurikaavio" accent>
         <div className="overflow-x-auto">
-          <svg width={760} height={310} className="bg-neutral-50 dark:bg-neutral-950 rounded-lg w-full">
+          <svg viewBox="0 0 760 310" className="bg-neutral-50 dark:bg-neutral-950 rounded-lg w-full h-auto">
             <defs>
               <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
                 <path d="M0,0 L0,6 L8,3 z" fill="#ADB5BD" />

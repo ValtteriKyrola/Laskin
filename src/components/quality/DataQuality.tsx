@@ -69,7 +69,7 @@ export default function DataQuality() {
       {/* Architecture */}
       <Card title="Datankeruuarkkitehtuuri" accent>
         <div className="overflow-x-auto">
-          <svg width={980} height={220} className="bg-neutral-50 dark:bg-neutral-950 rounded-lg w-full">
+          <svg viewBox="0 0 980 220" className="bg-neutral-50 dark:bg-neutral-950 rounded-lg w-full h-auto">
             <defs>
               <marker id="arrd" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
                 <path d="M0,0 L0,6 L8,3 z" fill="#ADB5BD" />
