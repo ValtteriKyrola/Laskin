@@ -51,37 +51,6 @@ export interface LayoutOption {
   createdAt: string;
 }
 
-// DED types
-export type DEDMaterial = '316L' | 'Inconel625' | 'Ti6Al4V' | 'H13' | 'Stellite6' | 'AlSi10Mg' | 'CuCrZr';
-export type DEDGeometry = 'rotationally-symmetric' | 'complex' | 'thin-wall' | 'massive';
-export type CurrentProcess = 'machining' | 'casting' | 'forging' | 'welding' | 'purchased';
-
-export interface DEDInput {
-  material: DEDMaterial;
-  geometry: DEDGeometry;
-  sizeX: number;
-  sizeY: number;
-  sizeZ: number;
-  weight: number;
-  annualVolume: number;
-  currentProcess: CurrentProcess;
-  buyToFly: number;
-}
-
-export interface DEDResult {
-  suitabilityScore: number;
-  materialScore: number;
-  geometryScore: number;
-  volumeScore: number;
-  materialSavingScore: number;
-  recommendation: 'excellent' | 'good' | 'moderate' | 'poor';
-  dedCostPerPart: number;
-  traditionalCostPerPart: number;
-  annualSaving: number;
-  co2Saving: number;
-  leadTimeReduction: number;
-}
-
 // FASTEMS types
 export interface FASTEMSNode {
   id: string;
@@ -135,8 +104,6 @@ export interface AppStore {
   setLayouts: (layouts: LayoutOption[]) => void;
   activeLayoutId: string | null;
   setActiveLayoutId: (id: string | null) => void;
-  dedInput: DEDInput;
-  setDEDInput: (input: DEDInput) => void;
   fastemTree: FASTEMSNode;
   setFASTEMTree: (tree: FASTEMSNode) => void;
 }

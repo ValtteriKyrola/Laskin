@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  LayoutDashboard, Map, TrendingUp, Layers, GitBranch,
+  LayoutDashboard, Map, TrendingUp, GitBranch,
   Package, BarChart3, ChevronLeft, ChevronRight, Sun, Moon,
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
@@ -11,7 +11,6 @@ export const navItems = [
   { id: 'dashboard',   label: 'Dashboard',     icon: LayoutDashboard },
   { id: 'layout',      label: 'Layout-suunn.', icon: Map },
   { id: 'investments', label: 'Investoinnit',  icon: TrendingUp },
-  { id: 'ded',         label: 'Meltio DED',    icon: Layers },
   { id: 'fastems',     label: 'FASTEMS',        icon: GitBranch },
   { id: 'odoo',        label: 'Odoo ERP',       icon: Package },
   { id: 'quality',     label: 'Datan keruu',   icon: BarChart3 },

@@ -1,5 +1,4 @@
-import type { Investment, InvestmentCalculation, DEDInput, DEDResult } from '../types';
-import { materialProperties } from '../data/defaults';
+import type { Investment, InvestmentCalculation } from '../types';
 
 export function calculateInvestment(inv: Investment, discountRate: number): InvestmentCalculation {
   const annualNetCashFlow = inv.annualSavings - inv.annualMaintenanceCost;
@@ -38,73 +37,6 @@ export function calculateInvestment(inv: Investment, discountRate: number): Inve
     npv,
     irr: irr * 100,
     annualNetCashFlow,
-  };
-}
-
-export function calculateDED(input: DEDInput): DEDResult {
-  const mat = materialProperties[input.material] || materialProperties['316L'];
-
-  // Material score
-  const materialScore = mat.dedScore;
-
-  // Geometry score
-  const geometryScoreMap: Record<string, number> = {
-    'rotationally-symmetric': 70,
-    'complex': 95,
-    'thin-wall': 80,
-    'massive': 60,
-  };
-  const geometryScore = geometryScoreMap[input.geometry] || 70;
-
-  // Volume/batch score (DED best for small batches)
-  let volumeScore = 100;
-  if (input.annualVolume > 100) volumeScore = 50;
-  else if (input.annualVolume > 50) volumeScore = 70;
-  else if (input.annualVolume > 20) volumeScore = 85;
-
-  // Material saving score
-  const materialSavingScore = Math.min(100, (input.buyToFly - 1) * 20);
-
-  // Overall score (weighted average)
-  const suitabilityScore = Math.round(
-    materialScore * 0.35 +
-    geometryScore * 0.25 +
-    volumeScore * 0.20 +
-    materialSavingScore * 0.20
-  );
-
-  let recommendation: DEDResult['recommendation'] = 'poor';
-  if (suitabilityScore >= 80) recommendation = 'excellent';
-  else if (suitabilityScore >= 65) recommendation = 'good';
-  else if (suitabilityScore >= 50) recommendation = 'moderate';
-
-  // Cost comparison (simplified)
-  const dedMaterialCost = input.weight * mat.costPerKg * 1.15; // 15% wire waste
-  const dedMachineTime = (input.weight / 0.3) / 60; // hours (0.3 kg/min deposition rate)
-  const dedMachineCost = dedMachineTime * 85; // €/h
-  const dedCostPerPart = dedMaterialCost + dedMachineCost + 150; // fixed overhead
-
-  const traditionalMaterialCost = input.weight * input.buyToFly * mat.costPerKg;
-  const traditionalMachineTime = (input.weight * (input.buyToFly - 1)) / 0.5; // hours
-  const traditionalMachineCost = traditionalMachineTime * 65;
-  const traditionalCostPerPart = traditionalMaterialCost + traditionalMachineCost + 80;
-
-  const annualSaving = (traditionalCostPerPart - dedCostPerPart) * input.annualVolume;
-  const co2Saving = input.weight * (input.buyToFly - 1.15) * 6.5; // kg CO2/kg steel saved
-  const leadTimeReduction = 40; // % typical
-
-  return {
-    suitabilityScore,
-    materialScore,
-    geometryScore,
-    volumeScore,
-    materialSavingScore,
-    recommendation,
-    dedCostPerPart: Math.max(0, dedCostPerPart),
-    traditionalCostPerPart: Math.max(0, traditionalCostPerPart),
-    annualSaving,
-    co2Saving: Math.max(0, co2Saving),
-    leadTimeReduction,
   };
 }
 

@@ -111,15 +111,6 @@ export default function Dashboard() {
       items: ['Koneistettu peruslevy (DNM 5700, 3 OP)', 'DED-korotuspala (Meltio Engine Robot)', 'Ostetut osat (ISO-standardiosat)', 'Koordinaattimittaus (CMM, OP60)'],
     },
     {
-      id: 'ded',
-      icon: <Cpu size={15} />,
-      title: 'Meltio DED – Soveltuvuusanalyysi',
-      status: 'Analysoitu',
-      statusVariant: 'success' as const,
-      desc: 'DED-soveltuvuusarviointi ja kustannusvertailu perinteiseen valmistukseen neljällä esimerkkitapauksella.',
-      items: ['Turbiinin siipi (Inconel 625)', 'Hydraulilohko (316L)', 'Kulumissuoja (Stellite 6)', 'Korjaustuloste (Ti6Al4V)'],
-    },
-    {
       id: 'odoo',
       icon: <Package size={15} />,
       title: 'Odoo ERP -selvitys',

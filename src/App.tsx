@@ -11,7 +11,6 @@ import { usePresence } from './hooks/usePresence';
 import Dashboard from './components/dashboard/Dashboard';
 import LayoutPlan from './components/layout-plan/LayoutPlan';
 import InvestmentCalculator from './components/investments/InvestmentCalculator';
-import DEDUseCaseTool from './components/ded-usecase/DEDUseCaseTool';
 import FASTEMSTree from './components/fastems/FASTEMSTree';
 import OdooERP from './components/odoo/OdooERP';
 import DataQuality from './components/quality/DataQuality';
@@ -20,7 +19,6 @@ const pages: Record<string, React.ComponentType> = {
   dashboard: Dashboard,
   layout: LayoutPlan,
   investments: InvestmentCalculator,
-  ded: DEDUseCaseTool,
   fastems: FASTEMSTree,
   odoo: OdooERP,
   quality: DataQuality,

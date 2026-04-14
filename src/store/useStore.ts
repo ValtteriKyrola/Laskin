@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Investment, DEDInput, LayoutOption, FASTEMSNode } from '../types';
-import { defaultInvestments, defaultDEDInput, defaultLayout, defaultFASTEMSTree } from '../data/defaults';
+import type { Investment, LayoutOption, FASTEMSNode } from '../types';
+import { defaultInvestments, defaultLayout, defaultFASTEMSTree } from '../data/defaults';
 import type { PresenceUser } from '../hooks/usePresence';
 
 export interface Toast {
@@ -42,9 +42,6 @@ interface AppState {
   setLayouts: (layouts: LayoutOption[]) => void;
   activeLayoutId: string | null;
   setActiveLayoutId: (id: string | null) => void;
-
-  dedInput: DEDInput;
-  setDEDInput: (input: DEDInput) => void;
 
   fastemTree: FASTEMSNode;
   setFASTEMTree: (tree: FASTEMSNode) => void;
@@ -87,9 +84,6 @@ export const useStore = create<AppState>()(
       activeLayoutId: defaultLayout.id,
       setActiveLayoutId: (activeLayoutId) => set({ activeLayoutId }),
 
-      dedInput: defaultDEDInput,
-      setDEDInput: (dedInput) => set({ dedInput }),
-
       fastemTree: defaultFASTEMSTree,
       setFASTEMTree: (fastemTree) => set({ fastemTree }),
     }),
@@ -105,7 +99,6 @@ export const useStore = create<AppState>()(
         discountRate: s.discountRate,
         layouts: s.layouts,
         activeLayoutId: s.activeLayoutId,
-        dedInput: s.dedInput,
         fastemTree: s.fastemTree,
       }),
     }

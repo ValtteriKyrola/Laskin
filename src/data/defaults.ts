@@ -1,4 +1,4 @@
-import type { Investment, DEDInput, LayoutOption, FASTEMSNode, SensorData } from '../types';
+import type { Investment, LayoutOption, FASTEMSNode, SensorData } from '../types';
 
 export const defaultInvestments: Investment[] = [
   {
@@ -46,18 +46,6 @@ export const defaultInvestments: Investment[] = [
     color: '#8b5cf6',
   },
 ];
-
-export const defaultDEDInput: DEDInput = {
-  material: '316L',
-  geometry: 'complex',
-  sizeX: 200,
-  sizeY: 150,
-  sizeZ: 100,
-  weight: 2.5,
-  annualVolume: 20,
-  currentProcess: 'machining',
-  buyToFly: 4.5,
-};
 
 export const defaultLayout: LayoutOption = {
   id: 'layout-1',
@@ -257,13 +245,3 @@ export const sensorDataTable: SensorData[] = [
   { machine: 'Mittausasema', parameter: 'Pinnankarheus Ra', frequency: 'Per osa', purpose: 'Pintalaadun valvonta', unit: 'µm' },
   { machine: 'Ympäristö', parameter: 'Lämpötila & kosteus', frequency: '0.1 Hz', purpose: 'Lämpötilakompensointi', unit: '°C / %RH' },
 ];
-
-export const materialProperties: Record<string, { dedScore: number; density: number; costPerKg: number; printability: string }> = {
-  '316L': { dedScore: 95, density: 7.99, costPerKg: 45, printability: 'Erinomainen' },
-  'Inconel625': { dedScore: 88, density: 8.44, costPerKg: 280, printability: 'Hyvä' },
-  'Ti6Al4V': { dedScore: 82, density: 4.43, costPerKg: 350, printability: 'Hyvä' },
-  'H13': { dedScore: 78, density: 7.80, costPerKg: 65, printability: 'Tyydyttävä' },
-  'Stellite6': { dedScore: 85, density: 8.40, costPerKg: 320, printability: 'Hyvä' },
-  'AlSi10Mg': { dedScore: 70, density: 2.67, costPerKg: 55, printability: 'Tyydyttävä' },
-  'CuCrZr': { dedScore: 65, density: 8.90, costPerKg: 120, printability: 'Haastava' },
-};
