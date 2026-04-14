@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../store/useStore';
-import { defaultInvestments, defaultDEDInput, defaultLayout, defaultFASTEMSTree } from '../data/defaults';
+import { defaultInvestments, defaultLayout, defaultFASTEMSTree } from '../data/defaults';
 
 const ADJECTIVES = ['Nopea', 'Rohkea', 'Tarkka', 'Vahva', 'Ketterä', 'Viisas', 'Luova'];
 const NOUNS = ['Insinööri', 'Suunnittelija', 'Analyytikko', 'Kehittäjä', 'Asiantuntija'];
@@ -21,7 +21,7 @@ function getOrCreateUserName(): string {
 }
 
 export function useSession() {
-  const { sessionId, setSessionId, userName, setUserName, setInvestments, setLayouts, setDEDInput, setFASTEMTree, addToast } = useStore();
+  const { sessionId, setSessionId, userName, setUserName, setInvestments, setLayouts, setFASTEMTree, addToast } = useStore();
 
   useEffect(() => {
     const name = getOrCreateUserName();
@@ -81,7 +81,6 @@ export function useSession() {
     await Promise.all([
       supabase.from('investments').insert({ session_id: sid, data: defaultInvestments, updated_by: userName }),
       supabase.from('layouts').insert({ session_id: sid, data: [defaultLayout], updated_by: userName }),
-      supabase.from('ded_input').insert({ session_id: sid, data: defaultDEDInput, updated_by: userName }),
       supabase.from('fastems_tree').insert({ session_id: sid, data: defaultFASTEMSTree, updated_by: userName }),
     ]);
 
@@ -92,16 +91,14 @@ export function useSession() {
   }
 
   async function loadSessionData(sid: string) {
-    const [inv, lay, ded, fas] = await Promise.all([
+    const [inv, lay, fas] = await Promise.all([
       supabase.from('investments').select('data').eq('session_id', sid).single(),
       supabase.from('layouts').select('data').eq('session_id', sid).single(),
-      supabase.from('ded_input').select('data').eq('session_id', sid).single(),
       supabase.from('fastems_tree').select('data').eq('session_id', sid).single(),
     ]);
 
     if (inv.data) setInvestments(inv.data.data);
     if (lay.data) setLayouts(lay.data.data);
-    if (ded.data) setDEDInput(ded.data.data);
     if (fas.data) setFASTEMTree(fas.data.data);
 
     // Päivitä URL

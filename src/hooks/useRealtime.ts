@@ -16,7 +16,6 @@ export function useRealtime() {
     sessionId, userName,
     investments, setInvestments,
     layouts, setLayouts,
-    dedInput, setDEDInput,
     fastemTree, setFASTEMTree,
     addToast,
   } = useStore();
@@ -55,17 +54,6 @@ export function useRealtime() {
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
-        table: 'ded_input',
-        filter: `session_id=eq.${sessionId}`,
-      }, (payload) => {
-        if (ignoreNext.current['ded_input']) { ignoreNext.current['ded_input'] = false; return; }
-        const by = payload.new.updated_by ?? 'Joku';
-        setDEDInput(payload.new.data);
-        addToast({ message: `${by} päivitti DED-analyysin`, type: 'info' });
-      })
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
         table: 'fastems_tree',
         filter: `session_id=eq.${sessionId}`,
       }, (payload) => {
@@ -98,14 +86,6 @@ export function useRealtime() {
     }, 600)
   ).current;
 
-  const pushDED = useRef(
-    debounce(async (sid: string, data: unknown, by: string) => {
-      ignoreNext.current['ded_input'] = true;
-      await supabase.from('ded_input').update({ data, updated_by: by, updated_at: new Date().toISOString() })
-        .eq('session_id', sid);
-    }, 800)
-  ).current;
-
   const pushFASTEMS = useRef(
     debounce(async (sid: string, data: unknown, by: string) => {
       ignoreNext.current['fastems_tree'] = true;
@@ -129,14 +109,6 @@ export function useRealtime() {
     prevLay.current = layouts;
     pushLayouts(sessionId, layouts, userName);
   }, [layouts, sessionId, userName, pushLayouts]);
-
-  // Watch dedInput
-  const prevDED = useRef(dedInput);
-  useEffect(() => {
-    if (!sessionId || dedInput === prevDED.current) return;
-    prevDED.current = dedInput;
-    pushDED(sessionId, dedInput, userName);
-  }, [dedInput, sessionId, userName, pushDED]);
 
   // Watch fastemTree
   const prevFAS = useRef(fastemTree);
