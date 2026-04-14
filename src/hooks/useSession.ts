@@ -20,12 +20,20 @@ function getOrCreateUserName(): string {
   return name;
 }
 
+// Skip Supabase if credentials are not configured
+const supabaseConfigured =
+  !!import.meta.env.VITE_SUPABASE_URL &&
+  import.meta.env.VITE_SUPABASE_URL !== 'https://placeholder.supabase.co';
+
 export function useSession() {
   const { sessionId, setSessionId, userName, setUserName, setInvestments, setLayouts, setFASTEMTree, addToast } = useStore();
 
   useEffect(() => {
     const name = getOrCreateUserName();
     if (!userName) setUserName(name);
+
+    // If Supabase is not configured, work with localStorage only — no error shown
+    if (!supabaseConfigured) return;
 
     const params = new URLSearchParams(window.location.search);
     const urlSession = params.get('session');
@@ -35,7 +43,6 @@ export function useSession() {
 
     async function init() {
       if (urlSession && UUID_RE.test(urlSession)) {
-        // Liity olemassaolevaan sessioon
         const { data, error } = await supabase.from('sessions').select('id').eq('id', urlSession).maybeSingle();
         if (!error && data) {
           setSessionId(data.id);
@@ -45,7 +52,6 @@ export function useSession() {
       }
 
       if (sessionId && UUID_RE.test(sessionId)) {
-        // Käytä tallennettua sessiota
         const { data, error } = await supabase.from('sessions').select('id').eq('id', sessionId).maybeSingle();
         if (!error && data) {
           await loadSessionData(data.id);
@@ -53,7 +59,6 @@ export function useSession() {
         }
       }
 
-      // Luo uusi sessio
       await createNewSession();
     }
 
@@ -76,7 +81,6 @@ export function useSession() {
     const sid = data.id;
     setSessionId(sid);
 
-    // Lisää oletusdata sessioon
     const userName = getOrCreateUserName();
     await Promise.all([
       supabase.from('investments').insert({ session_id: sid, data: defaultInvestments, updated_by: userName }),
@@ -84,7 +88,6 @@ export function useSession() {
       supabase.from('fastems_tree').insert({ session_id: sid, data: defaultFASTEMSTree, updated_by: userName }),
     ]);
 
-    // Päivitä URL
     const url = new URL(window.location.href);
     url.searchParams.set('session', sid);
     window.history.replaceState({}, '', url.toString());
@@ -101,7 +104,6 @@ export function useSession() {
     if (lay.data) setLayouts(lay.data.data);
     if (fas.data) setFASTEMTree(fas.data.data);
 
-    // Päivitä URL
     const url = new URL(window.location.href);
     url.searchParams.set('session', sid);
     window.history.replaceState({}, '', url.toString());

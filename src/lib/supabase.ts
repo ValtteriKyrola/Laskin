@@ -14,4 +14,4 @@ export const supabase = createClient(
   supabaseAnonKey ?? 'placeholder'
 );
 
-export type TableName = 'investments' | 'layouts' | 'ded_input' | 'fastems_tree';
+export type TableName = 'investments' | 'layouts' | 'fastems_tree';
