@@ -382,7 +382,7 @@ export default function LayoutPlan() {
           <svg
             ref={svgRef}
             viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`}
-            style={{ width: '100%', minWidth: 600, height: 'auto', aspectRatio: `${CANVAS_W}/${CANVAS_H}` }}
+            style={{ width: '100%', height: 'auto', aspectRatio: `${CANVAS_W}/${CANVAS_H}` }}
             className="bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-100 dark:border-neutral-800 cursor-default block"
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}

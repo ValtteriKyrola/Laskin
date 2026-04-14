@@ -397,7 +397,7 @@ export default function InvestmentCalculator() {
                       {grp.expanded && (
                         <>
                           {/* Column headers */}
-                          <div className="grid grid-cols-12 gap-2 px-5 py-2 bg-neutral-50/40 dark:bg-neutral-800/40 border-b border-neutral-100 dark:border-neutral-700/40">
+                          <div className="hidden sm:grid grid-cols-12 gap-2 px-5 py-2 bg-neutral-50/40 dark:bg-neutral-800/40 border-b border-neutral-100 dark:border-neutral-700/40">
                             <span className="col-span-1" />
                             <span className="col-span-6 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">Kustannuserä</span>
                             <span className="col-span-4 text-[10px] font-semibold uppercase tracking-wider text-neutral-400 text-right">Summa</span>
@@ -408,7 +408,7 @@ export default function InvestmentCalculator() {
                             <div
                               key={r.id}
                               className={[
-                                'grid grid-cols-12 gap-2 items-center px-5 py-2.5 transition-colors',
+                                'grid grid-cols-12 gap-2 items-center px-3 sm:px-5 py-2.5 transition-colors',
                                 idx % 2 === 0 ? 'bg-white dark:bg-neutral-800' : 'bg-neutral-50/50 dark:bg-neutral-800/60',
                                 !r.enabled ? 'opacity-40' : '',
                               ].join(' ')}
@@ -433,7 +433,7 @@ export default function InvestmentCalculator() {
                               </div>
 
                               {/* Label */}
-                              <div className="col-span-6">
+                              <div className="col-span-7 sm:col-span-6">
                                 <span className={`text-sm ${
                                   r.optional
                                     ? 'text-neutral-500 dark:text-neutral-400 italic'
@@ -449,7 +449,7 @@ export default function InvestmentCalculator() {
                               </div>
 
                               {/* Amount input — proper box */}
-                              <div className="col-span-4 flex items-center justify-end gap-1">
+                              <div className="col-span-3 sm:col-span-4 flex items-center justify-end gap-1">
                                 <div className={`flex items-center gap-1 rounded-lg border px-2 py-1.5 transition-colors ${
                                   r.enabled
                                     ? 'bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-600 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/20'
@@ -458,7 +458,7 @@ export default function InvestmentCalculator() {
                                   <input
                                     type="number"
                                     aria-label={r.label}
-                                    className="w-20 text-right font-mono text-sm bg-transparent focus:outline-none text-neutral-800 dark:text-neutral-200 disabled:text-neutral-400"
+                                    className="w-14 sm:w-20 text-right font-mono text-sm bg-transparent focus:outline-none text-neutral-800 dark:text-neutral-200 disabled:text-neutral-400"
                                     value={r.amount}
                                     onChange={e => updateAmount(machine.id, grp.id, r.id, Number(e.target.value))}
                                     disabled={!r.enabled}

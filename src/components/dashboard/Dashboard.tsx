@@ -159,9 +159,9 @@ export default function Dashboard() {
 
       {/* Production cell machines */}
       <Card title="Tuotantosolun laitteet" accent>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
+        <div className="flex overflow-x-auto gap-2 pb-1 sm:grid sm:grid-cols-3 lg:grid-cols-7">
           {MACHINES.map((m) => (
-            <div key={m.name} className={`${m.bg} rounded-xl p-3 flex flex-col items-center text-center gap-1.5`}>
+            <div key={m.name} className={`${m.bg} rounded-xl p-3 flex flex-col items-center text-center gap-1.5 shrink-0 w-28 sm:w-auto`}>
               <span className={`${m.color}`}>{m.icon}</span>
               <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 leading-tight">{m.name}</span>
               <span className="text-[10px] text-neutral-500 dark:text-neutral-400 leading-tight">{m.role}</span>

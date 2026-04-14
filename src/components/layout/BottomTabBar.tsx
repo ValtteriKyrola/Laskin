@@ -19,8 +19,8 @@ export default function BottomTabBar() {
                 : 'text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300',
             ].join(' ')}
           >
-            <Icon size={18} className={isActive ? 'text-primary-500' : ''} />
-            <span className="truncate w-full text-center px-0.5">{label.split(' ')[0]}</span>
+            <Icon size={20} className={isActive ? 'text-primary-500' : ''} />
+            <span className="hidden sm:block truncate w-full text-center px-0.5 text-[10px]">{label.split(' ')[0]}</span>
           </button>
         );
       })}
